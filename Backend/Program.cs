@@ -40,13 +40,105 @@ namespace Backend
             // var program = new Program();
             // var key = program.Login(connString, "awagga", "gweeble").Result;
 
-            var key = Login(connString, "awagga", "gweeble").Result.Item1;
-            
+            var loginfo = Login(connString, "awagga", "gweeble").Result;
+            var key = loginfo.Item1;
+            var id = loginfo.Item2;
             Console.WriteLine(key);
+        }
+
+        // TODO: Other functions utilize "email" and "password" while this does not. Uniformize all DB Access methods when moving over.
+        // Move to DB Access later
+        // <param name="connString">Connection string to postgres database</param>
+        // <param name="userName">Username of new account</param>
+        // <param name="masterPass">Master password of new account</param>
+        public static async Task CreateAccount(string connString, string userName, string masterPass) {
+            // Generate user key
+            var hashPass = BCrypt.HashPassword(masterPass);
+
+            // Generate random key
+            // TODO: Establish proper key generation method using masterPass in DB Access
+            var userKey = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(userKey);
+            }
+
+            // Add user to DB
+            await using var dataSource = NpgsqlDataSource.Create(connString);
+            await using var command = dataSource.CreateCommand("INSERT INTO users (user_name, user_pass, user_key) VALUES (@user_name, @user_pass, @user_key)");
+            command.Parameters.AddWithValue("user_name", userName);
+            command.Parameters.AddWithValue("user_pass", hashPass);
+            command.Parameters.AddWithValue("user_key", userKey);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        // Encrypt and add password to DB
+        // Move to DB Access later
+        // <param name="connString">Connection string to postgres database</param>
+        // <param name="key">Lockbox key</param>
+        // <param name="ownerID">User ID of owner</param>
+        // <param name="location">Website or location of password</param>
+        // <param name="userName">Username of password</param>
+        // <param name="email">Email of password</param>
+        // <param name="password">Password</param>
+        public static async Task AddPassword(string connString, byte[] key, int ownerID, string location, string userName, string email, string password) 
+        {
+            // Encrypt location, username, email, and password with key
+            using (Aes myAes = Aes.Create())
+            {
+                myAes.GenerateIV();
+                // Encrypt information
+                byte[] encryptedLocation = EncryptStringToBytes_Aes(location, key, myAes.IV);
+                byte[] encryptedUsername = EncryptStringToBytes_Aes(userName, key, myAes.IV);
+                byte[] encryptedEmail = EncryptStringToBytes_Aes(email, key, myAes.IV);
+                byte[] encryptedPassword = EncryptStringToBytes_Aes(password, key, myAes.IV);
+
+                // Concatenate IV and encrypted password
+                byte[] encryptedIVPass = new byte[4 + myAes.IV.Length + encryptedPassword.Length];
+                BitConverter.GetBytes(myAes.IV.Length).CopyTo(encryptedIVPass, 0); // Add IV length to beginning of array to allow for IV extraction later
+                myAes.IV.CopyTo(encryptedIVPass, 4);
+                encryptedPassword.CopyTo(encryptedIVPass, myAes.IV.Length);
+            
+                // Send to DB
+                await using var dataSource = NpgsqlDataSource.Create(connString);
+                await using var command = dataSource.CreateCommand("INSERT INTO passwords (owner_id, login_location, login_user, login_email, login_password) VALUES (@owner_id, @login_location, @login_user, @login_email, @login_password)");
+                command.Parameters.AddWithValue("owner_id", ownerID);
+                command.Parameters.AddWithValue("login_location", encryptedLocation);
+                command.Parameters.AddWithValue("login_user", encryptedUsername);
+                command.Parameters.AddWithValue("login_email", encryptedEmail);
+                command.Parameters.AddWithValue("login_password", encryptedIVPass);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+
+        static byte[] EncryptStringToBytes_Aes(string plainText, byte[] key, byte[] iv)
+        {
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = key;
+                aesAlg.IV = iv;
+
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            swEncrypt.Write(plainText);
+                        }
+                    }
+                    return msEncrypt.ToArray();
+                }
+            }
         }
 
         // Login function returns tuple of lockbox key and user ID
         // Move to DB Access later
+        // <param name="connString">Connection string to postgres database</param>
+        // <param name="email">Email of user</param>
+        // <param name="password">Password of user</param>
         public static async Task<Tuple<string, int>> Login(string connection, string email, string password)
         {
             await using var dataSource = NpgsqlDataSource.Create(connection);
@@ -65,6 +157,8 @@ namespace Backend
         // Retrieve all encrypted passwords from DB
         // Passwords are made of a username, email, password, and website/location
         // Move to DB Access later
+        // <param name="connString">Connection string to postgres database</param>
+        // <param name="owner_id">User ID of owner</param>
         public static async Task<Dictionary<string, List<string>>> GetPasswords(string connection, int owner_id)
         {
             await using var dataSource = NpgsqlDataSource.Create(connection);
