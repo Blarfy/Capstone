@@ -8,6 +8,8 @@ namespace Backend
     using System;
     using System.Security.Cryptography;
     using BCrypt.Net;
+    using System.Diagnostics.CodeAnalysis;
+
     internal class Program
     {
         static async Task Main(string[] args)
@@ -40,10 +42,12 @@ namespace Backend
             // var program = new Program();
             // var key = program.Login(connString, "awagga", "gweeble").Result;
 
-            var loginfo = Login(connString, "awagga", "gweeble").Result;
-            var key = loginfo.Item1;
+            await CreateAccount(connString, "Gweppy", "password");
+            var loginfo = Login(connString, "Gweppy", "password").Result;
+            byte[] key = loginfo.Item1;
             var id = loginfo.Item2;
             Console.WriteLine(key);
+            await AddPassword(connString, key, id, "www.google.com", "username", "awagga@beemail", "myPassword");
         }
 
         // TODO: Other functions utilize "email" and "password" while this does not. Uniformize all DB Access methods when moving over.
@@ -139,19 +143,21 @@ namespace Backend
         // <param name="connString">Connection string to postgres database</param>
         // <param name="email">Email of user</param>
         // <param name="password">Password of user</param>
-        public static async Task<Tuple<string, int>> Login(string connection, string email, string password)
+        public static async Task<Tuple<byte[], int>> Login(string connection, string email, string password)
         {
             await using var dataSource = NpgsqlDataSource.Create(connection);
             await using var command = dataSource.CreateCommand("SELECT user_pass, user_key, user_id FROM users WHERE user_name = @user_name");
             command.Parameters.AddWithValue("user_name", email);
             await using var reader = await command.ExecuteReaderAsync();
+            byte[] key = new byte[32];
 
-            //if (await reader.ReadAsync() && BCrypt.Verify(password, reader.GetString(0)))
-            if (await reader.ReadAsync())
+            if (await reader.ReadAsync() && BCrypt.Verify(password, reader.GetString(0)))
+            //if (await reader.ReadAsync())
             {
-                return new Tuple<string, int>(reader.GetString(1), reader.GetInt32(2));
+                key = reader.GetFieldValue<byte[]>(1);
+                return new Tuple<byte[], int>(key, reader.GetInt32(2));
             } 
-            else return new Tuple<string, int>("", -1);
+            else return new Tuple<byte[], int>(key, -1);
         }
 
         // Retrieve all encrypted passwords from DB
