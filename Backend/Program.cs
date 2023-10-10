@@ -28,21 +28,14 @@ namespace Backend
             var connString = $"Host={DBhost};Username={DBuser};Password={DBpass};Database={DBname}";
 
             // Connect to postgres
-            await using var dataSource = NpgsqlDataSource.Create(connString);
-            await using var command = dataSource.CreateCommand("SELECT user_name FROM users");
-            await using var reader = await command.ExecuteReaderAsync();
+            // await using var dataSource = NpgsqlDataSource.Create(connString);
+            // await using var command = dataSource.CreateCommand("SELECT user_name FROM users");
+            // await using var reader = await command.ExecuteReaderAsync();
 
-            while (await reader.ReadAsync())
-            {   
-                Console.WriteLine(reader.GetString(0));
-            }
-
-            // Test Encrypt/Decrypt
-            var testKey = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(testKey);
-            }
+            // while (await reader.ReadAsync())
+            // {   
+            //     Console.WriteLine(reader.GetString(0));
+            // }
             
             // Non-static version
             // var program = new Program();
@@ -107,8 +100,7 @@ namespace Backend
             using (Aes myAes = Aes.Create())
             {
                 // Generate IV
-                //myAes.GenerateIV();
-                myAes.IV = new byte[16];
+                myAes.GenerateIV();
 
                 // Encrypt information
                 byte[] encryptedLocation = EncryptStringToBytes_Aes(location, key, myAes.IV);
@@ -164,8 +156,7 @@ namespace Backend
             using (Aes aesAlg = Aes.Create()) 
             {
                 aesAlg.Key = key;
-                //aesAlg.IV = iv;
-                aesAlg.IV = new byte[16];
+                aesAlg.IV = iv;
 
                 ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
 
@@ -197,7 +188,6 @@ namespace Backend
             byte[] key = new byte[32];
 
             if (await reader.ReadAsync() && BCrypt.Verify(password, reader.GetString(0)))
-            //if (await reader.ReadAsync())
             {
                 key = reader.GetFieldValue<byte[]>(1);
                 return new Tuple<byte[], int>(key, reader.GetInt32(2));
@@ -235,23 +225,23 @@ namespace Backend
 
         // // Retrieve user_id from DB
         // // Move to DB Access later
-        // public static async Task<int> GetUserID(string connection, string email)
-        // {
-        //     await using var dataSource = NpgsqlDataSource.Create(connection);
-        //     await using var command = dataSource.CreateCommand("SELECT user_id FROM users WHERE user_name = @user_name");
-        //     command.Parameters.AddWithValue("user_name", email);
-        //     await using var reader = await command.ExecuteReaderAsync();
+        public static async Task<int> GetUserID(string connection, string email)
+        {
+            await using var dataSource = NpgsqlDataSource.Create(connection);
+            await using var command = dataSource.CreateCommand("SELECT user_id FROM users WHERE user_name = @user_name");
+            command.Parameters.AddWithValue("user_name", email);
+            await using var reader = await command.ExecuteReaderAsync();
 
-        //     if (await reader.ReadAsync())
-        //     {
-        //         return reader.GetInt32(0);
-        //     } 
-        //     else return -1;
-        // }
+            if (await reader.ReadAsync())
+            {
+                return reader.GetInt32(0);
+            } 
+            else return -1;
+        }
 
 
         // Decrypt all passwords using lockbox key
-        // Keep in memory for duration of session
+        // TODO: Keep in memory (cache) for duration of session
         // <param name="key">Lockbox key</param>
         // <param name="passwords">Dictionary of encrypted passwords</param>
         public static Dictionary<string, List<string>> DecryptPasswords(byte[] key, Dictionary<byte[], List<byte[]>> passwords)
@@ -280,6 +270,7 @@ namespace Backend
             }
             return decryptedPasswords;
         }
-        // TODO: Store lockbox key and passwords in cache  
+
+        // TODO: Method for storing lockbox key and passwords in cache  
     }
 }
