@@ -8,7 +8,6 @@ namespace Backend
     using System;
     using System.Security.Cryptography;
     using BCrypt.Net;
-    using System.Diagnostics.CodeAnalysis;
 
     internal class Program
     {
@@ -37,17 +36,32 @@ namespace Backend
             {   
                 Console.WriteLine(reader.GetString(0));
             }
+
+            // Test Encrypt/Decrypt
+            var testKey = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(testKey);
+            }
             
             // Non-static version
             // var program = new Program();
             // var key = program.Login(connString, "awagga", "gweeble").Result;
 
-            await CreateAccount(connString, "Gweppy", "password");
+            //await CreateAccount(connString, "Gweppy", "password");
             var loginfo = Login(connString, "Gweppy", "password").Result;
             byte[] key = loginfo.Item1;
             var id = loginfo.Item2;
-            Console.WriteLine(key);
-            await AddPassword(connString, key, id, "www.google.com", "username", "awagga@beemail", "myPassword");
+            // await AddPassword(connString, key, id, "www.google.com", "username", "awagga@beemail", "myPassword");
+            var passwords = DecryptPasswords(key, GetPasswords(connString, id).Result);
+            foreach (KeyValuePair<string, List<string>> entry in passwords)
+            {
+                Console.WriteLine(entry.Key);
+                foreach (string value in entry.Value)
+                {
+                    Console.WriteLine(value);
+                }
+            }
         }
 
         // TODO: Other functions utilize "email" and "password" while this does not. Uniformize all DB Access methods when moving over.
@@ -56,6 +70,7 @@ namespace Backend
         // <param name="userName">Username of new account</param>
         // <param name="masterPass">Master password of new account</param>
         public static async Task CreateAccount(string connString, string userName, string masterPass) {
+            // TODO: Ensure that user does not already exist in DB
             // Generate user key
             var hashPass = BCrypt.HashPassword(masterPass);
 
@@ -87,10 +102,14 @@ namespace Backend
         // <param name="password">Password</param>
         public static async Task AddPassword(string connString, byte[] key, int ownerID, string location, string userName, string email, string password) 
         {
+            // TODO: Ensure that password is not already in DB
             // Encrypt location, username, email, and password with key
             using (Aes myAes = Aes.Create())
             {
-                myAes.GenerateIV();
+                // Generate IV
+                //myAes.GenerateIV();
+                myAes.IV = new byte[16];
+
                 // Encrypt information
                 byte[] encryptedLocation = EncryptStringToBytes_Aes(location, key, myAes.IV);
                 byte[] encryptedUsername = EncryptStringToBytes_Aes(userName, key, myAes.IV);
@@ -101,7 +120,7 @@ namespace Backend
                 byte[] encryptedIVPass = new byte[4 + myAes.IV.Length + encryptedPassword.Length];
                 BitConverter.GetBytes(myAes.IV.Length).CopyTo(encryptedIVPass, 0); // Add IV length to beginning of array to allow for IV extraction later
                 myAes.IV.CopyTo(encryptedIVPass, 4);
-                encryptedPassword.CopyTo(encryptedIVPass, myAes.IV.Length);
+                encryptedPassword.CopyTo(encryptedIVPass, myAes.IV.Length + 4);
             
                 // Send to DB
                 await using var dataSource = NpgsqlDataSource.Create(connString);
@@ -138,6 +157,32 @@ namespace Backend
             }
         }
 
+        static string DecryptStringFromBytes_Aes(byte[] cipherText, byte[] key, byte[] iv)
+        {
+            string plaintext = "";
+
+            using (Aes aesAlg = Aes.Create()) 
+            {
+                aesAlg.Key = key;
+                //aesAlg.IV = iv;
+                aesAlg.IV = new byte[16];
+
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                using (MemoryStream msDecrypt = new MemoryStream(cipherText))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                        {
+                            plaintext = srDecrypt.ReadToEnd();
+                        }
+                    }
+                }
+            }
+            return plaintext;
+        }
+
         // Login function returns tuple of lockbox key and user ID
         // Move to DB Access later
         // <param name="connString">Connection string to postgres database</param>
@@ -165,24 +210,24 @@ namespace Backend
         // Move to DB Access later
         // <param name="connString">Connection string to postgres database</param>
         // <param name="owner_id">User ID of owner</param>
-        public static async Task<Dictionary<string, List<string>>> GetPasswords(string connection, int owner_id)
+        public static async Task<Dictionary<byte[], List<byte[]>>> GetPasswords(string connection, int owner_id)
         {
             await using var dataSource = NpgsqlDataSource.Create(connection);
             await using var command = dataSource.CreateCommand("SELECT login_location, login_user, login_email, login_password FROM passwords WHERE owner_id = @owner_id");
             command.Parameters.AddWithValue("owner_id", owner_id);
             await using var reader = await command.ExecuteReaderAsync();
 
-            var passwords = new Dictionary<string, List<string>>();
+            var passwords = new Dictionary<byte[], List<byte[]>>();
 
             while (await reader.ReadAsync())
             {
-                List<string> passData = new List<string>
+                List<byte[]> passData = new List<byte[]>
                 {
-                    reader.GetString(1),
-                    reader.GetString(2),
-                    reader.GetString(3)
+                    reader.GetFieldValue<byte[]>(1),
+                    reader.GetFieldValue<byte[]>(2),
+                    reader.GetFieldValue<byte[]>(3)
                 };
-                passwords.Add(reader.GetString(0), passData); 
+                passwords.Add(reader.GetFieldValue<byte[]>(0), passData); 
             }
 
             return passwords;
@@ -206,6 +251,35 @@ namespace Backend
 
 
         // Decrypt all passwords using lockbox key
+        // Keep in memory for duration of session
+        // <param name="key">Lockbox key</param>
+        // <param name="passwords">Dictionary of encrypted passwords</param>
+        public static Dictionary<string, List<string>> DecryptPasswords(byte[] key, Dictionary<byte[], List<byte[]>> passwords)
+        {
+            var decryptedPasswords = new Dictionary<string, List<string>>();
+            foreach (KeyValuePair<byte[], List<byte[]>> entry in passwords)
+            {
+                List<string> passData = new List<string> {};
+                // Extract IV length from first 4 bytes of encryptedIVPass
+                byte[] encryptedIVPass = entry.Value[2];
+                int ivLength = BitConverter.ToInt32(encryptedIVPass, 0);
+                byte[] iv = new byte[ivLength];
+                Array.Copy(encryptedIVPass, 4, iv, 0, ivLength);
+
+                // Extract encrypted password
+                byte[] encryptedPassword = new byte[16];
+                Array.Copy(encryptedIVPass, ivLength + 4, encryptedPassword, 0, encryptedPassword.Length);
+
+                // Decrypt all data
+                passData.Add(DecryptStringFromBytes_Aes(entry.Value[0], key, iv));
+                passData.Add(DecryptStringFromBytes_Aes(entry.Value[1], key, iv));
+                passData.Add(DecryptStringFromBytes_Aes(encryptedPassword, key, iv));
+
+                // Decrypt location and add to dictionary
+                decryptedPasswords.Add(DecryptStringFromBytes_Aes(entry.Key, key, iv), passData);
+            }
+            return decryptedPasswords;
+        }
         // TODO: Store lockbox key and passwords in cache  
     }
 }
