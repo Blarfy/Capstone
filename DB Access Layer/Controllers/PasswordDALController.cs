@@ -29,7 +29,7 @@ namespace DB_Access_Layer.Controllers
             return connString;
         }
 
-        string connString = getConnString();
+        static string connString = getConnString();
 
         [HttpGet ("TestConnection")]
         public string TestConnection()
@@ -37,13 +37,12 @@ namespace DB_Access_Layer.Controllers
             return "Hello World!";
         }
 
-        // TODO: Other functions utilize "email" and "password" while this does not. Uniformize all DB Access methods when moving over.
-        // Move to DB Access later
+        // Create new account with a random key
         // <param name="connString">Connection string to postgres database</param>
         // <param name="userName">Username of new account</param>
         // <param name="masterPass">Master password of new account</param>
         [HttpPost("CreateAccount")]
-        public async Task CreateAccount([FromQuery] string userName, [FromQuery] string masterPass) {
+        public async Task<string> CreateAccount([FromQuery] string email, [FromQuery] string masterPass) {
             // TODO: Ensure that user does not already exist in DB
 
             // Generate random key for user encryption
@@ -56,37 +55,47 @@ namespace DB_Access_Layer.Controllers
             // Add user to DB
             await using var dataSource = NpgsqlDataSource.Create(connString);
             await using var command = dataSource.CreateCommand("INSERT INTO users (user_name, user_pass, user_key) VALUES (@user_name, @user_pass, @user_key)");
-            command.Parameters.AddWithValue("user_name", userName);
+            command.Parameters.AddWithValue("user_name", email);
             command.Parameters.AddWithValue("user_pass", masterPass);
             command.Parameters.AddWithValue("user_key", userKey);
             await command.ExecuteNonQueryAsync();
+            return "Account created successfully!";
         }
 
-        // Retrieve user_id from DB
-        // Unsure where to use this as of now
-        // <param name="connection">Connection string to postgres database</param>
-        public async Task<int> GetUserID(string email)
+        /// <summary>
+        /// Get user ID from DB
+        /// </summary>
+        /// <param name="email">User's Email</param>
+        /// <param name="password">User's Password</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Returns -1 if user does not exist or password is incorrect
+        /// </remarks>
+        public async Task<int> GetUserID(string email, string password) // Merge with Login function?
         {
             await using var dataSource = NpgsqlDataSource.Create(connString);
-            await using var command = dataSource.CreateCommand("SELECT user_id FROM users WHERE user_name = @user_name");
+            await using var command = dataSource.CreateCommand("SELECT user_id, user_pass FROM users WHERE user_name = @user_name");
             command.Parameters.AddWithValue("user_name", email);
             await using var reader = await command.ExecuteReaderAsync();
 
-            if (await reader.ReadAsync())
+            if (await reader.ReadAsync() && BCrypt.Verify(password, reader.GetString(1)))
             {
                 return reader.GetInt32(0);
             } 
             else return -1;
         }
 
-        // Login function returns tuple of lockbox key and user ID
-        // <param name="email">Email of user</param>
-        // <param name="password">Password of user</param>
-        [HttpPost("Login")]
-        public async Task<Tuple<byte[], int>> Login([FromQuery] string email, [FromQuery] string password)
+        /// <summary>
+        /// Login function returns lockbox key
+        /// </summary>
+        /// <param name="email">E-Mail of user</param>
+        /// <param name="password">Password of user</param>
+        /// <returns></returns>
+        [HttpGet("Login")]
+        public async Task<byte[]> Login([FromQuery] string email, [FromQuery] string password) // Merge with GetUserID function? Check if moving key around is secure
         {
             await using var dataSource = NpgsqlDataSource.Create(connString);
-            await using var command = dataSource.CreateCommand("SELECT user_pass, user_key, user_id FROM users WHERE user_name = @user_name");
+            await using var command = dataSource.CreateCommand("SELECT user_pass, user_key FROM users WHERE user_name = @user_name");
             command.Parameters.AddWithValue("user_name", email);
             await using var reader = await command.ExecuteReaderAsync();
             byte[] key = new byte[32];
@@ -94,23 +103,27 @@ namespace DB_Access_Layer.Controllers
             if (await reader.ReadAsync() && BCrypt.Verify(password, reader.GetString(0)))
             {
                 key = reader.GetFieldValue<byte[]>(1);
-                return new Tuple<byte[], int>(key, reader.GetInt32(2));
+                return key;
             } 
-            else return new Tuple<byte[], int>(key, -1);
+            else return key;
         }        
 
-        // Encrypt and add password to DB
-        // <param name="key">Lockbox key</param>
-        // <param name="ownerID">User ID of owner</param>
-        // <param name="encryptedLocation">Encrypted location of login</param>
-        // <param name="encryptedUsername">Encrypted username of login</param>
-        // <param name="encryptedEmail">Encrypted email of login</param>
-        // <param name="encryptedIVPass">Encrypted password of login</param>
+
+        /// <summary>
+        /// Encrypt and add password to DB
+        /// </summary>
+        /// <param name="email">User's Email</param>
+        /// <param name="password">User's Password</param>
+        /// <param name="encPass">Encrypted Password</param>
+        /// <returns></returns>
         [HttpPost("AddPassword")]
-        public async Task AddPassword([FromQuery] int ownerID, [FromBody] EncryptedPassword encPass) 
+        public async Task<string> AddPassword([FromQuery] string email, [FromQuery] string password, [FromBody] EncryptedPassword encPass) 
         {
             // TODO: Ensure that password is not already in DB
 
+            int ownerID = GetUserID(email, password).Result;
+
+            // Add password to DB        
             await using var dataSource = NpgsqlDataSource.Create(connString);
             await using var command = dataSource.CreateCommand("INSERT INTO passwords (owner_id, login_location, login_user, login_email, login_password) VALUES (@owner_id, @login_location, @login_user, @login_email, @login_password)");
             command.Parameters.AddWithValue("owner_id", ownerID);
@@ -119,33 +132,41 @@ namespace DB_Access_Layer.Controllers
             command.Parameters.AddWithValue("login_email", encPass.encryptedEmail);
             command.Parameters.AddWithValue("login_password", encPass.encryptedIVPass);
             await command.ExecuteNonQueryAsync();
+            return "Password added successfully!";
         }
 
         // Retrieve all encrypted passwords from DB
         // Passwords are made of a username, email, password, and website/location
         // <param name="owner_id">User ID of owner</param>
         [HttpGet("GetPasswords")]
-        public async Task<Dictionary<byte[], List<byte[]>>> GetPasswords([FromQuery] int owner_id)
+        public async Task<List<string>> GetPasswords([FromQuery] string email, [FromQuery] string password) 
         {
-            await using var dataSource = NpgsqlDataSource.Create(connString);
-            await using var command = dataSource.CreateCommand("SELECT login_location, login_user, login_email, login_password FROM passwords WHERE owner_id = @owner_id");
-            command.Parameters.AddWithValue("owner_id", owner_id);
-            await using var reader = await command.ExecuteReaderAsync();
-
-            var passwords = new Dictionary<byte[], List<byte[]>>();
-
-            while (await reader.ReadAsync())
             {
-                List<byte[]> passData = new List<byte[]>
-                {
-                    reader.GetFieldValue<byte[]>(1),
-                    reader.GetFieldValue<byte[]>(2),
-                    reader.GetFieldValue<byte[]>(3)
-                };
-                passwords.Add(reader.GetFieldValue<byte[]>(0), passData); 
-            }
+                int owner_id = GetUserID(email, password).Result;
 
-            return passwords;
-        }        
+                await using var dataSource = NpgsqlDataSource.Create(connString);
+                await using var command = dataSource.CreateCommand("SELECT login_location, login_user, login_email, login_password FROM passwords WHERE owner_id = @owner_id");
+                command.Parameters.AddWithValue("owner_id", owner_id);
+                await using var reader = await command.ExecuteReaderAsync();
+
+                List<string> passwords = new List<string>();
+                int count = 0;
+
+                while (await reader.ReadAsync())
+                {
+                    var encPass = new EncryptedPassword
+                    {
+                        // Turn into byte array
+                        encryptedLocation = reader.GetFieldValue<byte[]>(0),
+                        encryptedUsername = reader.GetFieldValue<byte[]>(1),
+                        encryptedEmail = reader.GetFieldValue<byte[]>(2),
+                        encryptedIVPass = reader.GetFieldValue<byte[]>(3)
+                    };
+                    passwords.Add(System.Text.Json.JsonSerializer.Serialize(encPass));
+                }
+
+                return passwords;
+            }        
+        }
     }
 }
