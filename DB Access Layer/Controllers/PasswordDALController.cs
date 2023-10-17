@@ -37,10 +37,12 @@ namespace DB_Access_Layer.Controllers
             return "Hello World!";
         }
 
-        // Create new account with a random key
-        // <param name="connString">Connection string to postgres database</param>
-        // <param name="userName">Username of new account</param>
-        // <param name="masterPass">Master password of new account</param>
+        /// <summary>
+        /// Create new account with a random key
+        /// </summary>
+        /// <param name="email">Email of new account</param>
+        /// <param name="masterPass">Master password of new account</param>
+        /// <returns></returns>
         [HttpPost("CreateAccount")]
         public async Task<string> CreateAccount([FromQuery] string email, [FromQuery] string masterPass) {
             // TODO: Ensure that user does not already exist in DB
@@ -135,9 +137,13 @@ namespace DB_Access_Layer.Controllers
             return "Password added successfully!";
         }
 
-        // Retrieve all encrypted passwords from DB
-        // Passwords are made of a username, email, password, and website/location
-        // <param name="owner_id">User ID of owner</param>
+        /// <summary>
+        /// Retrieve all encrypted passwords from DB
+        /// Passwords are made of a username, email, password, and website/location
+        /// </summary>
+        /// <param name="email">User's Email</param>
+        /// <param name="password">User's Password</param>
+        /// <returns></returns>
         [HttpGet("GetPasswords")]
         public async Task<List<string>> GetPasswords([FromQuery] string email, [FromQuery] string password) 
         {
