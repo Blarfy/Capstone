@@ -1,6 +1,16 @@
-import './assets/main.css'
+import { createApp } from "vue"; // Import createApp for Vue 3
+import App from "./App.vue";
+import SidebarComponent from "./components/SidebarComponent.vue";
+import ContentComponent from "./components/ContentComponent.vue";
+import Login from "./components/Login.vue";
 
-import { createApp } from 'vue'
-import App from './App.vue'
+// Create a Vue app instance
+const app = createApp(App);
 
-createApp(App).mount('#app')
+// Register components
+app.component("sidebar-component", SidebarComponent);
+app.component("content-component", ContentComponent);
+app.component("login-component", Login)
+
+// Mount the app
+app.mount("#app");

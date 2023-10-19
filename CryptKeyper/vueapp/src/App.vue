@@ -1,47 +1,34 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    <login-component></login-component>
+    <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" />
+    <content-component :isSidebarOpen="isSidebarOpen" />
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
+<script>
+import { ref } from 'vue';
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+export default {
+  setup() {
+    const isSidebarOpen = ref(false);
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+    const toggleSidebar = () => {
+      isSidebarOpen.value = !isSidebarOpen.value;
+    };
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+    return {
+      isSidebarOpen,
+      toggleSidebar,
+    };
+  },
+};
+</script>
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    display: inline;
+    background-color: gainsboro;
 }
 </style>
