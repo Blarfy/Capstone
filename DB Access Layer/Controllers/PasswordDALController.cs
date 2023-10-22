@@ -145,7 +145,7 @@ namespace DB_Access_Layer.Controllers
         /// <param name="password">User's Password</param>
         /// <returns></returns>
         [HttpGet("GetPasswords")]
-        public async Task<List<string>> GetPasswords([FromQuery] string email, [FromQuery] string password) 
+        public async Task<List<EncryptedPassword>> GetPasswords([FromQuery] string email, [FromQuery] string password) 
         {
             {
                 int owner_id = GetUserID(email, password).Result;
@@ -155,8 +155,7 @@ namespace DB_Access_Layer.Controllers
                 command.Parameters.AddWithValue("owner_id", owner_id);
                 await using var reader = await command.ExecuteReaderAsync();
 
-                List<string> passwords = new List<string>();
-                int count = 0;
+                List<EncryptedPassword> passwords = new List<EncryptedPassword>();
 
                 while (await reader.ReadAsync())
                 {
@@ -168,9 +167,8 @@ namespace DB_Access_Layer.Controllers
                         encryptedEmail = reader.GetFieldValue<byte[]>(2),
                         encryptedIVPass = reader.GetFieldValue<byte[]>(3)
                     };
-                    passwords.Add(System.Text.Json.JsonSerializer.Serialize(encPass));
+                    passwords.Add(encPass);
                 }
-
                 return passwords;
             }        
         }
