@@ -3,13 +3,22 @@
     <login-component></login-component>
     <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" />
     <content-component :isSidebarOpen="isSidebarOpen" />
-  </div>
+  </div> 
 </template>
 
 <script>
+import LoginComponent from './LoginPage.vue';
+import SidebarComponent from './components/SidebarComponent.vue';
+import ContentComponent from './components/ContentComponent.vue';
 import { ref } from 'vue';
 
 export default {
+  name: 'App',
+  components: {
+    LoginComponent,
+    SidebarComponent,
+    ContentComponent,
+  },
   setup() {
     const isSidebarOpen = ref(false);
 
