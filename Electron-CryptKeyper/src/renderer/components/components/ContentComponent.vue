@@ -29,21 +29,9 @@ export default {
   data() {
     return {
       searchQuery: '',
-      appSiteItems: [
-        { id: 1, appSite: 'Example App 1' },
-        { id: 2, appSite: 'Sample Website 1' },
-        { id: 3, appSite: 'Test App 2' },
-      ],
-      usernameItems: [
-        { id: 1, username: 'user1' },
-        { id: 2, username: 'john_doe' },
-        { id: 3, username: 'test_user' },
-      ],
-      passwordItems: [
-        { id: 1, password: 'password123' },
-        { id: 2, password: 'securePass!2023' },
-        { id: 3, password: 'testing456' },
-      ]
+      appSiteItems: [],
+      usernameItems: [],
+      passwordItems: []
     };
   },
   created() {
@@ -65,12 +53,22 @@ export default {
           console.log(response)
           const data = await response.json();
           console.log(data)
-          this.encryptedPasswords = data;
+          // this.encryptedPasswords = data; // decrypt passwords here, need login info.
+          
+          // Display the encrypted data for now
+          for (let i = 0; i < data.length; i++) {
+            this.appSiteItems.push({ id: i, appSite: data[i].encryptedLocation });
+            this.usernameItems.push({ id: i, username: data[i].encryptedEmail });
+            this.passwordItems.push({ id: i, password: data[i].encryptedIVPass });
+          }
+
         } else {
           console.error(`Failed to retrieve data. Status code: ${response.status}`);
+          this.appSiteItems.push({ id: 0, appSite: 'Failed to retrieve data. Verify Login Information.' });
         }
       } catch (error) {
         console.error(`An error occurred: ${error}`);
+        this.appSiteItems.push({ id: 2, appSite: 'An error occurred. Failed to retrieve data.' });
       }
     }
 },
@@ -87,7 +85,7 @@ export default {
   align-items: center;
   padding: 15px;
   margin-right: 0;
-  background-color: #fff; /* Replace with your desired background color */
+  background-color: #fff;
   border-bottom: 2px solid black; /* Fix the border declaration */
   color: black; /* Text color */
   transition: margin-left 0.3s;
@@ -116,7 +114,7 @@ export default {
 .content {
   margin-left: 50px;
   transition: margin-left 0.3s;
-  display: flex; /* Add display: flex to the content container */
+  display: flex;
 }
 
 .content.open {
@@ -126,7 +124,7 @@ export default {
 .column {
   margin-top: 20px;
   padding: 15px;
-  width: 25%; /* Adjust the width as needed, but for side-by-side columns, the sum should not exceed 100% */
+  width: 25%;
   border: 1px solid #ccc;
   flex: 1;
 }
