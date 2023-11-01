@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34202.233
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptKeyAPI", "CryptKeyAPI.csproj", "{1D6BC409-3842-459B-814D-DBCA03DF87EA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D6BC409-3842-459B-814D-DBCA03DF87EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D6BC409-3842-459B-814D-DBCA03DF87EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D6BC409-3842-459B-814D-DBCA03DF87EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D6BC409-3842-459B-814D-DBCA03DF87EA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2DC613A8-07FF-4661-8681-FAF353FFEEE5}
+	EndGlobalSection
+EndGlobal
