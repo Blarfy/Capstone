@@ -107,7 +107,7 @@ namespace DB_Access_Layer.Controllers
                 key = reader.GetFieldValue<byte[]>(1);
                 return key;
             } 
-            else return key;
+            else return null;
         }        
 
 

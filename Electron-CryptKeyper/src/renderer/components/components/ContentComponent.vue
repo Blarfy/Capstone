@@ -12,6 +12,10 @@
         <p v-for="item in appSiteItems" :key="item.id">{{ item.appSite }}</p>
       </div>
       <div class="column">
+        <h2>Email</h2>
+        <p v-for="item in emailItems" :key="item.id">{{ item.email }}</p>
+      </div>
+      <div class="column">
         <h2>Username</h2>
         <p v-for="item in usernameItems" :key="item.id">{{ item.username }}</p>
       </div>
@@ -30,6 +34,7 @@ export default {
     return {
       searchQuery: '',
       appSiteItems: [],
+      emailItems: [],
       usernameItems: [],
       passwordItems: []
     };
@@ -46,18 +51,18 @@ export default {
     methods: {
     async fetchPasswords() {
       try {
+        this.appSiteItems.push({ id: 0, appSite: 'Loading Data...' });
         const response = await fetch('https://localhost:7212/pass?email=Gweppy&password=password');
 
         if (response.ok) {
-          console.log('Data retrieved successfully!')
-          console.log(response)
           const data = await response.json();
-          console.log(data)
+          this.appSiteItems = [];
           // this.encryptedPasswords = data; // decrypt passwords here, need login info.
           
           // Display the encrypted data for now
           for (let i = 0; i < data.length; i++) {
             this.appSiteItems.push({ id: i, appSite: data[i].encryptedLocation });
+            this.emailItems.push({ id: i, email: data[i].encryptedEmail });
             this.usernameItems.push({ id: i, username: data[i].encryptedEmail });
             this.passwordItems.push({ id: i, password: data[i].encryptedIVPass });
           }

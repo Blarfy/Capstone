@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import LoginComponent from './LoginPage.vue';
+import LoginComponent from './components/Login.vue';
 import SidebarComponent from './components/SidebarComponent.vue';
 import ContentComponent from './components/ContentComponent.vue';
 import { ref } from 'vue';

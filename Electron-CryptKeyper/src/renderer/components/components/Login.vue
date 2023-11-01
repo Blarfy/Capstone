@@ -7,7 +7,8 @@
         <input type="text" id="username" v-model="username" required>
         <label for="password">Password:</label>
         <input type="password" id="password" v-model="password" required>
-        <button type="submit">Log In</button>
+        <label for="error" style="color: red;">{{ error }}</label> <!-- Display error message here -->
+        <button type="submit">{{ loginButton }}</button>
       </form>
     </div>
   </div>
@@ -17,30 +18,37 @@
 export default {
   data() {
     return {
-      username: '',
-      password: '',
-      isLoggedIn: true, //set to false later
+      username: 'Gweppy',
+      password: 'password',
+      error: '',
+      loginButton: 'Login',
+      isLoggedIn: false
     };
   },
   methods: {
     async login() {
+      this.loginButton = 'Logging in...';
+      this.error = '';
       try {
-        const response = await api.post('/api/Login', {
-          email: this.username,
-          password: this.password,
-        });
+        const response = await fetch('https://localhost:7212/account?email=' + this.username + '&password=' + this.password);
 
-        const key = response.data; // Assuming your API returns the lockbox key
+        let key = await response.json();
+        console.log("Key: " + key)
         if (key) {
           // User is authenticated; set isLoggedIn to true
           this.isLoggedIn = true;
-          // Fetch and decrypt passwords here
-          this.fetchAndDecryptPasswords(key);
+          // Emit login info to parent component
+          this.$emit('userLogin', this.username, this.password, key);
         } else {
           // Handle authentication failure
+          this.error = 'Invalid username or password';
+          this.loginButton = 'Login';
         }
       } catch (error) {
         // Handle the API request error
+        console.log(error);
+        this.error = 'Invalid username or password'
+        this.loginButton = 'Login';
       }
     },
   },

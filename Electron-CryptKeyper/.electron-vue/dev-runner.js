@@ -1,8 +1,10 @@
 'use strict'
 
+const express = require('express')
 const chalk = require('chalk')
 const electron = require('electron')
 const path = require('path')
+const apiPath = path.join(__dirname, '../api/CryptKeyAPI/bin/Debug/net6.0/CryptKeyAPI.exe')
 const { say } = require('cfonts')
 const { spawn } = require('child_process')
 const webpack = require('webpack')
@@ -176,8 +178,41 @@ function greeting () {
   console.log(chalk.blue('  getting ready...') + '\n')
 }
 
+function startApi() {
+  // Code to start api executable on same port here
+  const apiProcess = spawn(apiPath)
+  apiProcess.stdout.on('data', data => {
+    apiLog(data, 'blue')
+  })
+  apiProcess.stderr.on('data', data => {
+    apiLog(data, 'red')
+  })
+  apiProcess.on('close', () => {
+    if (!manualRestart) process.exit()
+    apiLog('API closed', 'purple')
+  })
+}
+
+function apiLog (data, color) {
+  let log = ''
+  data = data.toString().split(/\r?\n/)
+  data.forEach(line => {
+    log += `  ${line}\n`
+  })
+  if (/[0-9A-z]+/.test(log)) {
+    console.log(
+      chalk[color].bold('┏ API -------------------') +
+      '\n\n' +
+      log +
+      chalk[color].bold('┗ ----------------------------') +
+      '\n'
+    )
+  }
+}
+
 function init () {
   greeting()
+  startApi()
 
   Promise.all([startRenderer(), startMain()])
     .then(() => {
