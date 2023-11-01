@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  props: ['isSidebarOpen'],
+  props: ['isSidebarOpen', 'userLogin'],
   data() {
     return {
       searchQuery: '',
@@ -40,13 +40,11 @@ export default {
     };
   },
   created() {
-    // fetch the data when the view is created and the data is
-    // already being observed
-    this.fetchPasswords();
+    this.fetchPasswords(); // Wait until receiving login info from parent component
   },
   watch: {
       // call again the method if the route changes
-      '$route': 'fetchPasswords'
+      '$route': 'fetchPasswords'      
   },
     methods: {
     async fetchPasswords() {

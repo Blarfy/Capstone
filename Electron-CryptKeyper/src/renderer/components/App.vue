@@ -2,7 +2,7 @@
   <div>
     <login-component></login-component>
     <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" />
-    <content-component :isSidebarOpen="isSidebarOpen" />
+    <content-component :isSidebarOpen="isSidebarOpen" :userLogin="userLogin" />
   </div> 
 </template>
 
@@ -18,6 +18,15 @@ export default {
     LoginComponent,
     SidebarComponent,
     ContentComponent,
+  },
+  data() {
+    return {
+      userLogin: {
+        username: '',
+        password: '',
+        key: ''
+      }
+    };
   },
   setup() {
     const isSidebarOpen = ref(false);
