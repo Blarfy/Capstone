@@ -5,6 +5,8 @@ namespace CryptKeyAPI.Controllers
     using Microsoft.AspNetCore.Mvc;
     using System.Security.Cryptography;
     using Newtonsoft.Json;
+    using System.Web;
+
     [ApiController]
     [Route("[controller]")]
     public class PassController 
@@ -107,13 +109,20 @@ namespace CryptKeyAPI.Controllers
         /// <param name="passwords">List of encrypted passwords</param>
         /// <returns></returns>
         [HttpPost("DecryptPasswords")]
-        public List<DecryptedPassword> DecryptPasswords([FromQuery]byte[] key, List<string> passwords)
+        public List<DecryptedPassword> DecryptPasswords([FromQuery]string key, [FromBody]List<EncryptedPassword> passwords)
         {
+            // convert key string back into byte array
+            byte[] keyBytes = new byte[32];
+            keyBytes = Convert.FromBase64String(key);
+
             var decryptedPasswords = new List<DecryptedPassword>();
-            foreach (string entry in passwords)
+            // example key input: %20/5atYQXMIZPBD3jTpNVjpMfKMmupzh+/BkZ/XfwRrvs=
+            // need to convert to byte array
+            //var sepPasswords = JsonConvert.DeserializeObject<List<EncryptedPassword>>(passwords);
+            foreach (EncryptedPassword entry in passwords)
             {
                 // Deserialize JSON string to EncryptedPassword object
-                var encPass = System.Text.Json.JsonSerializer.Deserialize<EncryptedPassword>(entry);
+                var encPass = entry;
 
                 // Extract IV from encryptedIVPass
                 byte[] iv = new byte[BitConverter.ToInt32(encPass.encryptedIVPass, 0)];
@@ -123,10 +132,10 @@ namespace CryptKeyAPI.Controllers
 
                 // Convert EncryptedPassword object to DecryptedPassword object
                 CryptController sepulchre = new CryptController();
-                string plaintextLocation = sepulchre.DecryptStringFromBytes_Aes(encPass.encryptedLocation, key, iv);
-                string? plaintextUsername = sepulchre.DecryptStringFromBytes_Aes(encPass.encryptedUsername, key, iv);
-                string? plaintextEmail = sepulchre.DecryptStringFromBytes_Aes(encPass.encryptedEmail, key, iv);
-                string plaintextIVPass = sepulchre.DecryptStringFromBytes_Aes(encryptedPassword, key, iv);
+                string plaintextLocation = sepulchre.DecryptStringFromBytes_Aes(encPass.encryptedLocation, keyBytes, iv);
+                string? plaintextUsername = sepulchre.DecryptStringFromBytes_Aes(encPass.encryptedUsername, keyBytes, iv);
+                string? plaintextEmail = sepulchre.DecryptStringFromBytes_Aes(encPass.encryptedEmail, keyBytes, iv);
+                string plaintextIVPass = sepulchre.DecryptStringFromBytes_Aes(encryptedPassword, keyBytes, iv);
                 var decPass = new DecryptedPassword(plaintextLocation, plaintextUsername, plaintextEmail, plaintextIVPass);
                 decryptedPasswords.Add(decPass);
             }

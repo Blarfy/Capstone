@@ -32,13 +32,12 @@ export default {
       try {
         const response = await fetch('https://localhost:7212/account?email=' + this.username + '&password=' + this.password);
 
-        let key = await response.json();
-        console.log("Key: " + key)
+        let key = await response.text();
         if (key) {
-          // User is authenticated; set isLoggedIn to true
-          this.isLoggedIn = true;
           // Emit login info to parent component
           this.$emit('userLogin', this.username, this.password, key);
+          // User is authenticated; set isLoggedIn to true
+          this.isLoggedIn = true;
         } else {
           // Handle authentication failure
           this.error = 'Invalid username or password';

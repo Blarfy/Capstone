@@ -1,6 +1,8 @@
+using System.Security.Cryptography;
+
 namespace CryptKeyAPI.Controllers
 {
-    using System.Security.Cryptography;
+
     public class CryptController 
     {
         /// <summary>

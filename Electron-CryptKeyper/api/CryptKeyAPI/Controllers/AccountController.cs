@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography.X509Certificates;
+using System.Web;
 
 namespace CryptKeyAPI.Controllers
 {
@@ -29,7 +30,7 @@ namespace CryptKeyAPI.Controllers
         /// <param name="password">User's Password</param>
         /// <returns></returns>
         [HttpGet(Name = "Login")]
-        public async Task<byte[]> Login([FromQuery]string email, [FromQuery]string password)
+        public async Task<string> Login([FromQuery]string email, [FromQuery]string password)
         {
             using (var httpClient = new HttpClient())
             {
@@ -45,13 +46,12 @@ namespace CryptKeyAPI.Controllers
 
                 // Extract key from response
                 recieved = recieved.Substring(1, recieved.Length - 2); // Remove surrounding quotes from string
-                byte[] key = new byte[32];
                 if (recieved != "Invalid credentials")
                 {
-                    key = Convert.FromBase64String(recieved);
+                    recieved = HttpUtility.UrlEncode(recieved);
+                    return recieved;
                 }
-
-                return key;
+                return null;
             }
         }
     }

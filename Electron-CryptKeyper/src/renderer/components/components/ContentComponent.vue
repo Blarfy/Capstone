@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  props: ['isSidebarOpen'],
+  props: ['isSidebarOpen', 'userLoginfo'],
   data() {
     return {
       searchQuery: '',
@@ -40,31 +40,61 @@ export default {
     };
   },
   created() {
-    // fetch the data when the view is created and the data is
-    // already being observed
-    this.fetchPasswords();
+    if (this.userLoginfo) {
+      this.fetchPasswords(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
+    }
   },
   watch: {
-      // call again the method if the route changes
-      '$route': 'fetchPasswords'
+    searchQuery: function (val) {
+      // Update anything upon search query change
+    },
+    userLoginfo: {
+      handler: function (val) {
+        // Update anything upon user login info change
+        this.fetchPasswords(val.email, val.password, val.key);
+      },
+      deep: true
+    }
   },
     methods: {
-    async fetchPasswords() {
+    async fetchPasswords(email, password, key) {
       try {
         this.appSiteItems.push({ id: 0, appSite: 'Loading Data...' });
-        const response = await fetch('https://localhost:7212/pass?email=Gweppy&password=password');
+        const response = await fetch('https://localhost:7212/pass?email=' + email + '&password=' + password);
 
         if (response.ok) {
           const data = await response.json();
           this.appSiteItems = [];
-          // this.encryptedPasswords = data; // decrypt passwords here, need login info.
-          
-          // Display the encrypted data for now
-          for (let i = 0; i < data.length; i++) {
-            this.appSiteItems.push({ id: i, appSite: data[i].encryptedLocation });
-            this.emailItems.push({ id: i, email: data[i].encryptedEmail });
-            this.usernameItems.push({ id: i, username: data[i].encryptedEmail });
-            this.passwordItems.push({ id: i, password: data[i].encryptedIVPass });
+          this.encryptedPasswords = data;
+
+          // Send encrypted data to decrypt function as a POST request
+          const decryptedData = await fetch('https://localhost:7212/pass/DecryptPasswords?key= ' + key, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+
+          console.log(JSON.stringify(data));
+
+          if (decryptedData.ok) {
+            const decryptedPasswords = await decryptedData.json();
+            this.appSiteItems = [];
+            this.emailItems = [];
+            this.usernameItems = [];
+            this.passwordItems = [];
+
+            // Display the decrypted data
+            for (let i = 0; i < decryptedPasswords.length; i++) {
+              this.appSiteItems.push({ id: i, appSite: decryptedPasswords[i].plaintextLocation });
+              this.emailItems.push({ id: i, email: decryptedPasswords[i].plaintextEmail });
+              this.usernameItems.push({ id: i, username: decryptedPasswords[i].plaintextUsername });
+              this.passwordItems.push({ id: i, password: decryptedPasswords[i].plaintextIVPass });
+            }
+          } else {
+            console.error(`Failed to decrypt data. Status code: ${decryptedData.status}`);
+            this.appSiteItems.push({ id: 1, appSite: 'Failed to decrypt data. Verify Login Information.' });
           }
 
         } else {

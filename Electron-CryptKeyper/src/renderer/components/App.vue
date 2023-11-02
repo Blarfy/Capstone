@@ -1,8 +1,8 @@
 <template>
   <div>
-    <login-component></login-component>
+    <login-component @userLogin="userLogin"></login-component>
     <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" />
-    <content-component :isSidebarOpen="isSidebarOpen" />
+    <content-component :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
   </div> 
 </template>
 
@@ -19,8 +19,19 @@ export default {
     SidebarComponent,
     ContentComponent,
   },
+  // data() {
+  //   return {
+  //     userLoginfo : null
+  //   };
+  // },
   setup() {
     const isSidebarOpen = ref(false);
+    const userLoginfo = ref(null);
+
+    const userLogin = (email, password, key) => {
+      console.log('User logged in');
+      userLoginfo.value = {email, password, key};
+    };
 
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value;
@@ -29,6 +40,8 @@ export default {
     return {
       isSidebarOpen,
       toggleSidebar,
+      userLoginfo,
+      userLogin
     };
   },
 };
