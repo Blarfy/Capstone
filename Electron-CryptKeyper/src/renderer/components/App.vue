@@ -19,11 +19,6 @@ export default {
     SidebarComponent,
     ContentComponent,
   },
-  // data() {
-  //   return {
-  //     userLoginfo : null
-  //   };
-  // },
   setup() {
     const isSidebarOpen = ref(false);
     const userLoginfo = ref(null);

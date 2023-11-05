@@ -8,7 +8,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" v-model="password" required>
         <label for="error" style="color: red;">{{ error }}</label> <!-- Display error message here -->
-        <button type="submit">{{ loginButton }}</button>
+        <button type="submit">{{ loginBtnTxt }}</button>
       </form>
     </div>
   </div>
@@ -21,13 +21,13 @@ export default {
       username: 'Gweppy',
       password: 'password',
       error: '',
-      loginButton: 'Login',
+      loginBtnTxt: 'Login',
       isLoggedIn: false
     };
   },
   methods: {
     async login() {
-      this.loginButton = 'Logging in...';
+      this.loginBtnTxt = 'Logging in...';
       this.error = '';
       try {
         const response = await fetch('https://localhost:7212/account?email=' + this.username + '&password=' + this.password);
@@ -41,13 +41,13 @@ export default {
         } else {
           // Handle authentication failure
           this.error = 'Invalid username or password';
-          this.loginButton = 'Login';
+          this.loginBtnTxt = 'Login';
         }
       } catch (error) {
         // Handle the API request error
         console.log(error);
         this.error = 'Invalid username or password'
-        this.loginButton = 'Login';
+        this.loginBtnTxt = 'Login';
       }
     },
   },

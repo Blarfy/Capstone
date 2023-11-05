@@ -6,6 +6,11 @@
         <input type="text" placeholder="Search..." v-model="searchQuery" />
       </div>
     </div>
+
+    <div v-if="isFormOpen">
+      <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" />
+    </div>
+
     <div class="content" :class="{ 'open': isSidebarOpen }">
       <div class="column">
         <h2>App/Site</h2>
@@ -24,11 +29,18 @@
         <p v-for="item in passwordItems" :key="item.id">{{ item.password }}</p>
       </div>
     </div>
+    <button class="plus-button" @click="toggleForm">+</button>
   </div>
 </template>
 
 <script>
+import DynamicForm from './DynamicForm.vue';
+
 export default {
+  name: 'ContentComponent',
+  components: {
+    DynamicForm,
+  },
   props: ['isSidebarOpen', 'userLoginfo'],
   data() {
     return {
@@ -36,7 +48,12 @@ export default {
       appSiteItems: [],
       emailItems: [],
       usernameItems: [],
-      passwordItems: []
+      passwordItems: [],
+      isFormOpen: false,
+      formTitle: 'Add Password',
+      numberOfFields: 4,
+      fieldLabels: ['App/Site', 'Email', 'Username', 'Password'],
+      fieldRequired: [true, false, false, true],
     };
   },
   created() {
@@ -76,8 +93,6 @@ export default {
             body: JSON.stringify(data)
           });
 
-          console.log(JSON.stringify(data));
-
           if (decryptedData.ok) {
             const decryptedPasswords = await decryptedData.json();
             this.appSiteItems = [];
@@ -87,10 +102,18 @@ export default {
 
             // Display the decrypted data
             for (let i = 0; i < decryptedPasswords.length; i++) {
-              this.appSiteItems.push({ id: i, appSite: decryptedPasswords[i].plaintextLocation });
-              this.emailItems.push({ id: i, email: decryptedPasswords[i].plaintextEmail });
-              this.usernameItems.push({ id: i, username: decryptedPasswords[i].plaintextUsername });
-              this.passwordItems.push({ id: i, password: decryptedPasswords[i].plaintextIVPass });
+              this.appSiteItems.push({ id: i, appSite: decryptedPasswords[i].plaintextLocation || null });
+
+              // If there is no email, display an invisible character to keep the table aligned
+              if (decryptedPasswords[i].plaintextEmail == '') {
+                this.emailItems.push({ id: i, email: 'ㅤ'});
+              }
+              else this.emailItems.push({ id: i, email: decryptedPasswords[i].plaintextEmail || null});
+              if (decryptedPasswords[i].plaintextUsername == '') {
+                this.usernameItems.push({ id: i, username: 'ㅤ'});
+              }
+              else this.usernameItems.push({ id: i, username: decryptedPasswords[i].plaintextUsername || null});
+              this.passwordItems.push({ id: i, password: decryptedPasswords[i].plaintextIVPass || null});
             }
           } else {
             console.error(`Failed to decrypt data. Status code: ${decryptedData.status}`);
@@ -105,7 +128,42 @@ export default {
         console.error(`An error occurred: ${error}`);
         this.appSiteItems.push({ id: 2, appSite: 'An error occurred. Failed to retrieve data.' });
       }
-    }
+    },
+    toggleForm() {
+      this.isFormOpen = !this.isFormOpen;
+    },
+    async handleFormSubmit(formData) {
+      // Add Password
+
+      try{
+        this.formTitle = 'Adding Password...';
+        const response = await fetch('https://localhost:7212/pass?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + "&strKey=" + this.userLoginfo.key, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            plaintextLocation: formData[0],
+            plaintextEmail: formData[1],
+            plaintextUsername: formData[2],
+            plaintextIVPass: formData[3]
+          })
+        });
+        if (response.ok) {
+          this.isFormOpen = false;
+          this.formTitle = 'Add Password';
+          this.fetchPasswords(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
+        }
+        else {
+          console.error(`Failed to add password. Status code: ${response.status}`);
+          this.formTitle = 'Failed to add password. Are you missing a field?.';
+        }
+      }
+      catch (error) {
+        console.error(`An error occurred: ${error}`);
+        this.formTitle = 'An error occurred. Failed to add password.';
+      }
+    },
 },
 
 };
@@ -166,6 +224,48 @@ export default {
 
 .column h2 {
   font-weight: bold;
+}
+/* TODO: Create a submission class which can be reused by the other pages. 
+    Copy base from Login component
+    + Buttons are linked to methods that pass in the type of info we need to query from user
+    ex: int count, string appSite, string email, string username, string password
+    4, ["Location", "Email", "Username", "Password"]
+    create 4 entry fields and link them to the 4 strings
+*/
+.plus-button { 
+	border: 2px solid lightgrey;
+	background-color: darkslategrey;
+  color: white;
+	font-size: 48px;
+  font-weight: bolder;
+	height: 1.8em;
+	width: 1.8em;
+	border-radius: 999px;
+	position: absolute;
+  align-self: right;
+  right: 50px;
+  bottom: 50px;
+	
+	&:after,
+	&:before {
+		content: "";
+		display: block;
+		background-color: grey;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+	
+	&:before {
+		height: 1em;
+		width: 0.2em;
+	}
+
+	&:after {
+		height: 0.2em;
+		width: 1em;
+	}
 }
 
 /* Adjust as needed for responsiveness */

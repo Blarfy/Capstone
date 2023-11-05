@@ -30,9 +30,12 @@ namespace CryptKeyAPI.Controllers
         /// <param name="passEmail">Email of password</param>
         /// <param name="passPassword">Password Password</param>
         [HttpPost(Name = "AddPassword")]
-        public async Task<string> AddPassword(string email, string password, byte[] key, string passLocation, string passUserName, string passEmail, string passPassword)
+        public async Task<string> AddPassword([FromQuery]string email, [FromQuery]string password, [FromQuery] string strKey, [FromBody]DecryptedPassword plaintextPass)
         {
+            byte[] key = new byte[32];
+            key = Convert.FromBase64String(strKey);
             // TODO: Ensure that password is not already in DB
+            // Do this in DB Access and return error message if password already exists
 
             // Encrypt location, username, email, and password with key
             using (Aes myAes = Aes.Create())
@@ -42,10 +45,10 @@ namespace CryptKeyAPI.Controllers
 
                 // Encrypt information
                 CryptController sepulchre = new CryptController();
-                byte[] encryptedLocation = sepulchre.EncryptStringToBytes_Aes(passLocation, key, myAes.IV);
-                byte[] encryptedUsername = sepulchre.EncryptStringToBytes_Aes(passUserName, key, myAes.IV);
-                byte[] encryptedEmail = sepulchre.EncryptStringToBytes_Aes(passEmail, key, myAes.IV);
-                byte[] encryptedPassword = sepulchre.EncryptStringToBytes_Aes(passPassword, key, myAes.IV);
+                byte[] encryptedLocation = sepulchre.EncryptStringToBytes_Aes(plaintextPass.plaintextLocation, key, myAes.IV);
+                byte[] encryptedUsername = sepulchre.EncryptStringToBytes_Aes(plaintextPass.plaintextUsername, key, myAes.IV);
+                byte[] encryptedEmail = sepulchre.EncryptStringToBytes_Aes(plaintextPass.plaintextEmail, key, myAes.IV);
+                byte[] encryptedPassword = sepulchre.EncryptStringToBytes_Aes(plaintextPass.plaintextIVPass, key, myAes.IV);
 
                 // Concatenate IV and encrypted password
                 byte[] encryptedIVPass = new byte[4 + myAes.IV.Length + encryptedPassword.Length];
