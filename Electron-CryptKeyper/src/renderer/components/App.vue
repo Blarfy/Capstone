@@ -2,14 +2,14 @@
   <div>
     <login-component @userLogin="userLogin"></login-component>
     <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" />
-    <content-component :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
+    <password-view :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
   </div> 
 </template>
 
 <script>
 import LoginComponent from './components/Login.vue';
 import SidebarComponent from './components/SidebarComponent.vue';
-import ContentComponent from './components/ContentComponent.vue';
+import PasswordView from './components/PasswordView.vue';
 import { ref } from 'vue';
 
 export default {
@@ -17,7 +17,7 @@ export default {
   components: {
     LoginComponent,
     SidebarComponent,
-    ContentComponent,
+    PasswordView,
   },
   setup() {
     const isSidebarOpen = ref(false);

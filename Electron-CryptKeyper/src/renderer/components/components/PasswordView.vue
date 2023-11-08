@@ -1,19 +1,14 @@
 <template>
   <div>
-    <div class="top-bar" :class="{ 'open': isSidebarOpen }">
-      <div class="title">Passwords</div>
-      <div class="search-bar">
-        <input type="text" placeholder="Search..." v-model="searchQuery" />
-      </div>
-    </div>
+    <TopBar :title="barTitle" :is-sidebar-open="isSidebarOpen" @search-changed="searchQuery" />
 
     <div v-if="isFormOpen">
       <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" />
     </div>
-
+    
     <div class="content" :class="{ 'open': isSidebarOpen }">
       <div class="column">
-        <h2>App/Site</h2>
+        <h2>Location</h2>
         <p v-for="item in appSiteItems" :key="item.id">{{ item.appSite }}</p>
       </div>
       <div class="column">
@@ -29,32 +24,70 @@
         <p v-for="item in passwordItems" :key="item.id">{{ item.password }}</p>
       </div>
     </div>
+    <StatusBlob :message="statusMessage" :is-error="isError" />
     <button class="plus-button" @click="toggleForm">+</button>
   </div>
 </template>
 
 <script>
 import DynamicForm from './DynamicForm.vue';
+import TopBar from './TopBar.vue';
+import StatusBlob from './StatusBlob.vue';
 
 export default {
-  name: 'ContentComponent',
+  name: 'PasswordView',
   components: {
     DynamicForm,
-  },
+    TopBar,
+    StatusBlob
+},
   props: ['isSidebarOpen', 'userLoginfo'],
   data() {
     return {
-      searchQuery: '',
-      appSiteItems: [],
-      emailItems: [],
-      usernameItems: [],
-      passwordItems: [],
+      query: '',
+      statusMessage: '',
+      isError: false,
+      decryptedPasswords: [],
       isFormOpen: false,
+      barTitle: 'Passwords',
       formTitle: 'Add Password',
       numberOfFields: 4,
-      fieldLabels: ['App/Site', 'Email', 'Username', 'Password'],
+      fieldLabels: ['Location', 'Email', 'Username', 'Password'],
       fieldRequired: [true, false, false, true],
     };
+  },
+  computed: {
+    filteredPasswords() {
+      return this.decryptedPasswords.filter((password) => {
+        return password.plaintextLocation.includes(this.query) || password.plaintextEmail.includes(this.query) || password.plaintextUsername.includes(this.query) || password.plaintextIVPass.includes(this.query);
+      });
+    },
+    appSiteItems() {
+      return this.filteredPasswords.map((password) => {
+        return { id: password.id, appSite: password.plaintextLocation };
+      });
+    },
+    emailItems() {
+      return this.filteredPasswords.map((password) => {
+        if (password.plaintextEmail === '') {
+          return { id: password.id, email: 'ㅤ' };
+        }
+        else return { id: password.id, email: password.plaintextEmail };
+      });
+    },
+    usernameItems() {
+      return this.filteredPasswords.map((password) => {
+        if (password.plaintextUsername === '') {
+          return { id: password.id, username: 'ㅤ' };
+        }
+        else return { id: password.id, username: password.plaintextUsername };
+      });
+    },
+    passwordItems() {
+      return this.filteredPasswords.map((password) => {
+        return { id: password.id, password: password.plaintextIVPass };
+      });
+    },
   },
   created() {
     if (this.userLoginfo) {
@@ -62,9 +95,6 @@ export default {
     }
   },
   watch: {
-    searchQuery: function (val) {
-      // Update anything upon search query change
-    },
     userLoginfo: {
       handler: function (val) {
         // Update anything upon user login info change
@@ -74,14 +104,20 @@ export default {
     }
   },
     methods: {
+    searchQuery (query) {
+      this.query = query;
+    },
+
     async fetchPasswords(email, password, key) {
       try {
-        this.appSiteItems.push({ id: 0, appSite: 'Loading Data...' });
+        this.statusMessage = 'Loading Data...';
+        this.isError = false;
+
         const response = await fetch('https://localhost:7212/pass?email=' + email + '&password=' + password);
 
         if (response.ok) {
           const data = await response.json();
-          this.appSiteItems = [];
+          this.statusMessage = '';
           this.encryptedPasswords = data;
 
           // Send encrypted data to decrypt function as a POST request
@@ -94,46 +130,29 @@ export default {
           });
 
           if (decryptedData.ok) {
-            const decryptedPasswords = await decryptedData.json();
-            this.appSiteItems = [];
-            this.emailItems = [];
-            this.usernameItems = [];
-            this.passwordItems = [];
-
-            // Display the decrypted data
-            for (let i = 0; i < decryptedPasswords.length; i++) {
-              this.appSiteItems.push({ id: i, appSite: decryptedPasswords[i].plaintextLocation || null });
-
-              // If there is no email, display an invisible character to keep the table aligned
-              if (decryptedPasswords[i].plaintextEmail == '') {
-                this.emailItems.push({ id: i, email: 'ㅤ'});
-              }
-              else this.emailItems.push({ id: i, email: decryptedPasswords[i].plaintextEmail || null});
-              if (decryptedPasswords[i].plaintextUsername == '') {
-                this.usernameItems.push({ id: i, username: 'ㅤ'});
-              }
-              else this.usernameItems.push({ id: i, username: decryptedPasswords[i].plaintextUsername || null});
-              this.passwordItems.push({ id: i, password: decryptedPasswords[i].plaintextIVPass || null});
-            }
+            this.decryptedPasswords = await decryptedData.json();
           } else {
             console.error(`Failed to decrypt data. Status code: ${decryptedData.status}`);
-            this.appSiteItems.push({ id: 1, appSite: 'Failed to decrypt data. Verify Login Information.' });
+            this.statusMessage = 'Failed to decrypt data. Verify Login Information.';
+            this.isError = true;
           }
 
         } else {
           console.error(`Failed to retrieve data. Status code: ${response.status}`);
-          this.appSiteItems.push({ id: 0, appSite: 'Failed to retrieve data. Verify Login Information.' });
+          this.statusMessage = 'Failed to retrieve data. Verify Login Information.';
+          this.isError = true;
         }
       } catch (error) {
         console.error(`An error occurred: ${error}`);
-        this.appSiteItems.push({ id: 2, appSite: 'An error occurred. Failed to retrieve data.' });
+        this.statusMessage = 'An error occurred. Failed to retrieve data.';
+        this.isError = true;
       }
     },
     toggleForm() {
       this.isFormOpen = !this.isFormOpen;
     },
     async handleFormSubmit(formData) {
-      // Add Password
+      // Add Item
 
       try{
         this.formTitle = 'Adding Password...';
@@ -164,45 +183,11 @@ export default {
         this.formTitle = 'An error occurred. Failed to add password.';
       }
     },
-},
-
+  },
 };
 </script>
 
-
 <style scoped>
-.top-bar {
-  margin-left: 50px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  margin-right: 0;
-  background-color: #fff;
-  border-bottom: 2px solid black; /* Fix the border declaration */
-  color: black; /* Text color */
-  transition: margin-left 0.3s;
-}
-
-.top-bar.open {
-  margin-left: 200px;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.search-bar {
-  flex: 1;
-  text-align: right;
-}
-
-.search-bar input {
-  padding: 5px;
-  width: 23%; 
-  border: 1px solid #ccc;
-}
 
 .content {
   margin-left: 50px;
@@ -224,14 +209,10 @@ export default {
 
 .column h2 {
   font-weight: bold;
+  font-size: 28px;
+  border-bottom: 2px solid darkgray;
+  text-align: center;
 }
-/* TODO: Create a submission class which can be reused by the other pages. 
-    Copy base from Login component
-    + Buttons are linked to methods that pass in the type of info we need to query from user
-    ex: int count, string appSite, string email, string username, string password
-    4, ["Location", "Email", "Username", "Password"]
-    create 4 entry fields and link them to the 4 strings
-*/
 .plus-button { 
 	border: 2px solid lightgrey;
 	background-color: darkslategrey;
@@ -268,10 +249,9 @@ export default {
 	}
 }
 
-/* Adjust as needed for responsiveness */
 @media (max-width: 768px) {
   .column {
-    flex: 0 0 100%; /* On smaller screens, make each column take up 100% of the width */
+    flex: 0 0 20%; /* On smaller screens, make each column take up 20% of the width */
   }
 }
 </style>
