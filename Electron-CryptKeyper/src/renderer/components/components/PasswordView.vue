@@ -117,7 +117,7 @@ export default {
 
         if (response.ok) {
           const data = await response.json();
-          this.statusMessage = '';
+          this.statusMessage = 'Decrypting Data...';
 
           // Send encrypted data to decrypt function as a POST request
           const decryptedData = await fetch('https://localhost:7212/pass/DecryptPasswords?key= ' + key, {
@@ -130,6 +130,7 @@ export default {
 
           if (decryptedData.ok) {
             this.decryptedPasswords = await decryptedData.json();
+            this.statusMessage = '';
           } else {
             console.error(`Failed to decrypt data. Status code: ${decryptedData.status}`);
             this.statusMessage = 'Failed to decrypt data. Verify Login Information.';

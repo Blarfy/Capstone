@@ -3,7 +3,7 @@
         <TopBar :is-sidebar-open="isSidebarOpen" :title="barTitle" @search-changed="searchQuery" />
 
         <div v-if="isFormOpen">
-            <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @formSubmitted="handleFormSubmit" />
+            <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" />
         </div>
 
         <div class="content" :class="{ 'open': isSidebarOpen }">
@@ -50,14 +50,14 @@ export default {
     computed: {
         filteredNotes() {
             return this.decryptedNotes.filter((note) => {
-                return note.title.toLowerCase().includes(this.query.toLowerCase()) || note.note.toLowerCase().includes(this.query.toLowerCase());
+                return note.plaintextTitle.includes(this.query) || note.plaintextNote.includes(this.query);
             });
         },
         titleItems() {
             return this.filteredNotes.map((note) => {
                 return {
                     id: note.id,
-                    title: note.title,
+                    title: note.plaintextTitle,
                 };
             });
         },
@@ -65,7 +65,7 @@ export default {
             return this.filteredNotes.map((note) => {
                 return {
                     id: note.id,
-                    note: note.note,
+                    note: note.plaintextNote,
                 };
             });
         },
@@ -73,6 +73,14 @@ export default {
     created() {
         if (this.userLoginfo) {
             this.fetchNotes(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
+        }
+    },
+    watch: {
+        userLoginfo: {
+            handler: function (val) {
+                this.fetchNotes(val.email, val.password, val.key);
+            },
+            deep: true
         }
     },
     methods: {
@@ -89,7 +97,7 @@ export default {
                 this.statusMessage = 'Fetching notes...';
                 this.isError = false;
 
-                const response = await fetch('http://localhost:7212/notes?email=' + email + '&password=' + password, {
+                const response = await fetch('https://localhost:7212/note?email=' + email + '&password=' + password, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -99,10 +107,10 @@ export default {
 
                 if (response.status === 200) {
                     const data = await response.json();
-                    this.statusMessage = '';
+                    this.statusMessage = 'Decrypting notes...';
 
                     // Send encrypted data to decrypt function as a POST request
-                    const decryptedData = await fetch('http://localhost:7212/notes/DecryptNotes?key=' + key, {
+                    const decryptedData = await fetch('https://localhost:7212/note/DecryptNotes?key=' + key, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -111,8 +119,9 @@ export default {
                         body: JSON.stringify(data),
                     });
 
-                    if (decryptedData.status === 200) {
+                    if (decryptedData.ok) {
                         this.decryptedNotes = await decryptedData.json();
+                        this.statusMessage = '';
                     } else {
                         this.statusMessage = 'Failed to decrypt data. Verify Login Information.';
                         this.isError = true;
@@ -129,18 +138,17 @@ export default {
 
         async handleFormSubmit(formData) {
             // Add Item
-
             try {
                 this.formTitle = 'Adding Note...';
-                const response = await fetch('http://localhost:7212/notes?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&strKey=' + this.userLoginfo.key, {
+                const response = await fetch('https://localhost:7212/note?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&strKey=' + this.userLoginfo.key, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Basic ' + btoa(this.userLoginfo.email + ':' + this.userLoginfo.password), // Check this later
                     },
                     body: JSON.stringify({
-                        title: formData[0],
-                        note: formData[1],
+                        plaintextTitle: formData[0],
+                        plaintextNote: formData[1],
                     }),
                 });
 
