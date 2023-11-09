@@ -118,7 +118,6 @@ export default {
         if (response.ok) {
           const data = await response.json();
           this.statusMessage = '';
-          this.encryptedPasswords = data;
 
           // Send encrypted data to decrypt function as a POST request
           const decryptedData = await fetch('https://localhost:7212/pass/DecryptPasswords?key= ' + key, {
@@ -168,12 +167,12 @@ export default {
             plaintextIVPass: formData[3]
           })
         });
+
         if (response.ok) {
           this.isFormOpen = false;
           this.formTitle = 'Add Password';
           this.fetchPasswords(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
-        }
-        else {
+        } else {
           console.error(`Failed to add password. Status code: ${response.status}`);
           this.formTitle = 'Failed to add password. Are you missing a field?.';
         }
@@ -187,72 +186,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 
-.content {
-  margin-left: 50px;
-  transition: margin-left 0.3s;
-  display: flex;
-}
-
-.content.open {
-  margin-left: 200px;
-}
-
-.column {
-  margin-top: 20px;
-  padding: 15px;
-  width: 25%;
-  border: 1px solid #ccc;
-  flex: 1;
-}
-
-.column h2 {
-  font-weight: bold;
-  font-size: 28px;
-  border-bottom: 2px solid darkgray;
-  text-align: center;
-}
-.plus-button { 
-	border: 2px solid lightgrey;
-	background-color: darkslategrey;
-  color: white;
-	font-size: 48px;
-  font-weight: bolder;
-	height: 1.8em;
-	width: 1.8em;
-	border-radius: 999px;
-	position: absolute;
-  align-self: right;
-  right: 50px;
-  bottom: 50px;
-	
-	&:after,
-	&:before {
-		content: "";
-		display: block;
-		background-color: grey;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-	}
-	
-	&:before {
-		height: 1em;
-		width: 0.2em;
-	}
-
-	&:after {
-		height: 0.2em;
-		width: 1em;
-	}
-}
-
-@media (max-width: 768px) {
-  .column {
-    flex: 0 0 20%; /* On smaller screens, make each column take up 20% of the width */
-  }
-}
 </style>
 

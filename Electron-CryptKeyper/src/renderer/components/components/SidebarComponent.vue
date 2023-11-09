@@ -3,14 +3,11 @@
     <nav :style="{ width: isSidebarOpen ? '200px' : '0' }">
       <ul>
         <li></li>
-        <li><a href="#">We</a></li>
-        <li><a href="#">Hope</a></li>
-        <li><a href="#">You're</a></li>
-        <li><a href="#">Having</a></li>
-        <li><a href="#">A</a></li>
-        <li><a href="#">Wonderful</a></li>
-        <li><a href="#">Day</a></li>
-        <li><a href="#">Today</a></li>
+        <!-- On click, emit a changeView -->
+        <li><a @click="$emit('changeView', 'password')">Passwords</a></li>
+        <li><a @click="$emit('changeView', 'notes')">Notes</a></li>
+        <li><a @click="$emit('changeView', 'payment')">Payment</a></li>
+        <li><a @click="$emit('changeView', 'files')">Files</a></li>
       <li></li>
       <li></li>
       <li></li>

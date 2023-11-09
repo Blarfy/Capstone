@@ -35,7 +35,9 @@ export default {
         let key = await response.text();
         if (key) {
           // Emit login info to parent component
+          this.$emit('changeView', 'password')
           this.$emit('userLogin', this.username, this.password, key);
+
           // User is authenticated; set isLoggedIn to true
           this.isLoggedIn = true;
         } else {

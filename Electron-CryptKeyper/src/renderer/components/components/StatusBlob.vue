@@ -25,6 +25,7 @@ export default {
 
 .message-box {
   background-color: #c2c2c2;
+  font-size: 20px;
   padding: 20px 40px;
   border-radius: 5px;
 }
