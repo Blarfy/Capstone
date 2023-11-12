@@ -20,7 +20,7 @@ namespace CryptKeyAPI.Controllers
         {
             using (var httpClient = new HttpClient())
             {
-                var response = httpClient.PostAsync($"https://localhost:7124/api/CreateAccount?email={email}&masterPass={masterPass}", null);
+                var response = httpClient.PostAsync($"https://localhost:7124/AccountsDAL/CreateAccount?email={email}&masterPass={masterPass}", null);
                 return await response.Result.Content.ReadAsStringAsync();
             }
         }
@@ -34,7 +34,7 @@ namespace CryptKeyAPI.Controllers
         {
             using (var httpClient = new HttpClient())
             {
-                var response = httpClient.GetAsync($"https://localhost:7124/api/Login?email={email}&password={password}");
+                var response = httpClient.GetAsync($"https://localhost:7124/AccountsDAL/Login?email={email}&password={password}");
 
                 // If login is unsuccessful, return null
                 if (!response.Result.IsSuccessStatusCode)

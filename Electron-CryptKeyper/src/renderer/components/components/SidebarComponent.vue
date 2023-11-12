@@ -83,5 +83,6 @@ nav ul li {
 nav ul li a {
     color: gainsboro;
     text-decoration: none;
+    cursor: pointer;
 }
 </style>

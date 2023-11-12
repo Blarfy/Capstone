@@ -4,6 +4,7 @@
     <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" @changeView="changeView"/>
     <password-view v-show="viewPassword" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
     <notes-view v-show="viewNotes" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
+    <payment-view v-show="viewPayment" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
   </div> 
 </template>
 
@@ -12,6 +13,7 @@ import LoginComponent from './components/Login.vue';
 import SidebarComponent from './components/SidebarComponent.vue';
 import PasswordView from './components/PasswordView.vue';
 import NotesView from './components/NotesView.vue';
+import PaymentView from './components/PaymentView.vue';
 import { ref } from 'vue';
 
 export default {
@@ -20,7 +22,8 @@ export default {
     LoginComponent,
     SidebarComponent,
     PasswordView,
-    NotesView
+    NotesView,
+    PaymentView
   },
   data() {
     return {

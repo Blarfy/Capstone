@@ -74,7 +74,7 @@ namespace CryptKeyAPI.Controllers
                 // Send to DB Access layer at localhost:7124
                 using (var httpClient = new HttpClient())
                 {
-                    var response = httpClient.PostAsync($"https://localhost:7124/api/AddPassword?email={email}&password={password}", content);
+                    var response = httpClient.PostAsync($"https://localhost:7124/PasswordDAL/AddPassword?email={email}&password={password}", content);
                     return await response.Result.Content.ReadAsStringAsync();
                 }
             }
@@ -92,7 +92,7 @@ namespace CryptKeyAPI.Controllers
             using (var httpClient = new HttpClient())
             {
                 List<EncryptedPassword> encryptedPasswords = new List<EncryptedPassword>();
-                var response = await httpClient.GetAsync($"https://localhost:7124/api/GetPasswords?email={email}&password={password}");
+                var response = await httpClient.GetAsync($"https://localhost:7124/PasswordDAL/GetPasswords?email={email}&password={password}");
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();

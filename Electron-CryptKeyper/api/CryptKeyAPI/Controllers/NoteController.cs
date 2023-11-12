@@ -59,7 +59,7 @@ namespace CryptKeyAPI.Controllers
                 // Send to DB Access API
                 using (var httpClient = new HttpClient())
                 {
-                    var response = httpClient.PostAsync($"https://localhost:7124/api/AddNote?email={email}&password={password}", content);
+                    var response = httpClient.PostAsync($"https://localhost:7124/NotesDAL/AddNote?email={email}&password={password}", content);
                     return await response.Result.Content.ReadAsStringAsync();
                 }
             }
@@ -72,7 +72,7 @@ namespace CryptKeyAPI.Controllers
             using (var httpClient = new HttpClient())
             {
                 List<EncryptedNote> encryptedNotes = new List<EncryptedNote>();
-                var response = await httpClient.GetAsync($"https://localhost:7124/api/GetNotes?email={email}&password={password}");
+                var response = await httpClient.GetAsync($"https://localhost:7124/NotesDAL/GetNotes?email={email}&password={password}");
                 if (response.IsSuccessStatusCode)
                 {
                     var recieved = await response.Content.ReadAsStringAsync();
