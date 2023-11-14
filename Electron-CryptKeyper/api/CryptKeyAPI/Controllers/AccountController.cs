@@ -18,6 +18,13 @@ namespace CryptKeyAPI.Controllers
         [HttpPost(Name = "CreateAccount")]
         public async Task<string> CreateAccount([FromQuery]string email, [FromQuery]string masterPass)
         {
+            CryptController sepulchre = new CryptController();
+            byte[] emailBytes = sepulchre.EncryptStringAsym(email);
+            byte[] passwordBytes = sepulchre.EncryptStringAsym(masterPass);
+
+            email = HttpUtility.UrlEncode(Convert.ToBase64String(emailBytes));
+            masterPass = HttpUtility.UrlEncode(Convert.ToBase64String(passwordBytes));
+
             using (var httpClient = new HttpClient())
             {
                 var response = httpClient.PostAsync($"https://localhost:7124/AccountsDAL/CreateAccount?email={email}&masterPass={masterPass}", null);
@@ -32,6 +39,13 @@ namespace CryptKeyAPI.Controllers
         [HttpGet(Name = "Login")]
         public async Task<string> Login([FromQuery]string email, [FromQuery]string password)
         {
+            CryptController sepulchre = new CryptController();
+            byte[] emailBytes = sepulchre.EncryptStringAsym(email);
+            byte[] passwordBytes = sepulchre.EncryptStringAsym(password);
+
+            email = HttpUtility.UrlEncode(Convert.ToBase64String(emailBytes));
+            password = HttpUtility.UrlEncode(Convert.ToBase64String(passwordBytes));
+
             using (var httpClient = new HttpClient())
             {
                 var response = httpClient.GetAsync($"https://localhost:7124/AccountsDAL/Login?email={email}&password={password}");

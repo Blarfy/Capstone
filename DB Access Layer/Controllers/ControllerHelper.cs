@@ -4,15 +4,24 @@ using Npgsql;
 namespace DB_Access_Layer.Controllers
 {
     using BCrypt.Net;
+    using System.Runtime.CompilerServices;
+    using System.Security.Cryptography;
+    using System.Text;
+
     public class ControllerHelper
     {
-        public static string getConnString()
+        public static IConfigurationRoot getConfig()
         {
-            // Add configuration file
             string appsettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "appsettings.json");
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile(appsettingsPath, optional: false, reloadOnChange: true)
                 .Build();
+            return configuration;
+        }
+        public static string getConnString()
+        {
+            // Add configuration file
+            var configuration = getConfig();
 
             // Get environment variables and construct connection string
             string DBhost = configuration.GetConnectionString("DefaultConnection") ?? "localhost";
@@ -46,6 +55,55 @@ namespace DB_Access_Layer.Controllers
             else return -1;
         }
 
-        // Decrypt Asymmetrically Method goes here
+        public string DecryptStringAsymmetrically(string encryptedData)
+        {
+            var configuration = getConfig();
+            string privateKey = configuration.GetValue<string>("PrivateKey");
+
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                try
+                {
+                    rsa.FromXmlString(privateKey);
+
+                    // Decrypt data
+                    byte[] encryptedBytes = Convert.FromBase64String(encryptedData);
+                    byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, false);
+
+                    // Convert decrypted data back to string
+                    string decryptedData = Encoding.UTF8.GetString(decryptedBytes);
+                    return decryptedData;
+                }
+                finally
+                {
+                    rsa.PersistKeyInCsp = false;
+                }
+            }
+        }
+
+        public string DecryptBytesAsymmetrically(byte[] encryptedData)
+        {
+            var configuration = getConfig();
+            string privateKey = configuration.GetValue<string>("PrivateKey");
+
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                try
+                {
+                    rsa.FromXmlString(privateKey);
+
+                    // Decrypt data
+                    byte[] decryptedBytes = rsa.Decrypt(encryptedData, false);
+
+                    // Convert decrypted data back to string
+                    string decryptedData = Encoding.UTF8.GetString(decryptedBytes);
+                    return decryptedData;
+                }
+                finally
+                {
+                    rsa.PersistKeyInCsp = false;
+                }
+            }
+        }
     }
 }

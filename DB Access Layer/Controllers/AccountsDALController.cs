@@ -23,6 +23,9 @@ namespace DB_Access_Layer.Controllers
         [HttpPost("CreateAccount")]
         public async Task<string> CreateAccount([FromQuery] string email, [FromQuery] string masterPass)
         {
+            email = controllerHelper.DecryptStringAsymmetrically(email);
+            masterPass = controllerHelper.DecryptStringAsymmetrically(masterPass);
+
             // TODO: Ensure that user does not already exist in DB
 
             // Generate random key for user encryption
@@ -51,6 +54,9 @@ namespace DB_Access_Layer.Controllers
         [HttpGet("Login")]
         public async Task<byte[]> Login([FromQuery] string email, [FromQuery] string password) // Merge with GetUserID function? Check if moving key around is secure
         {
+            email = controllerHelper.DecryptStringAsymmetrically(email);
+            password = controllerHelper.DecryptStringAsymmetrically(password);
+
             await using var dataSource = NpgsqlDataSource.Create(connString);
             await using var command = dataSource.CreateCommand("SELECT user_pass, user_key FROM users WHERE user_name = @user_name");
             command.Parameters.AddWithValue("user_name", email);

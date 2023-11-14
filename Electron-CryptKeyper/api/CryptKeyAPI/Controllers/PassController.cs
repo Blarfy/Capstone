@@ -15,12 +15,6 @@ namespace CryptKeyAPI.Controllers
         {
         }
 
-        [HttpGet("TestConnection")]
-        public string TestConnection()
-        {
-            return "Hello World!";
-        }
-
         /// Encrypt and add password to DB
         /// <param name="email">User's Email</param>
         /// <param name="password">User's Password</param>
@@ -71,6 +65,13 @@ namespace CryptKeyAPI.Controllers
                 // Create StringContent object from JSON string
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
+                // Asymmetrically encrypt email and password
+                byte[] emailBytes = sepulchre.EncryptStringAsym(email);
+                byte[] passwordBytes = sepulchre.EncryptStringAsym(password);
+
+                email = HttpUtility.UrlEncode(Convert.ToBase64String(emailBytes));
+                password = HttpUtility.UrlEncode(Convert.ToBase64String(passwordBytes));
+
                 // Send to DB Access layer at localhost:7124
                 using (var httpClient = new HttpClient())
                 {
@@ -89,6 +90,13 @@ namespace CryptKeyAPI.Controllers
         [HttpGet(Name = "GetPasswords")]
         public async Task<List<EncryptedPassword>> GetPasswords([FromQuery]string email, [FromQuery]string password)
         {
+            CryptController sepulchre = new CryptController();
+            byte[] emailBytes = sepulchre.EncryptStringAsym(email);
+            byte[] passwordBytes = sepulchre.EncryptStringAsym(password);
+
+            email = HttpUtility.UrlEncode(Convert.ToBase64String(emailBytes));
+            password = HttpUtility.UrlEncode(Convert.ToBase64String(passwordBytes));
+
             using (var httpClient = new HttpClient())
             {
                 List<EncryptedPassword> encryptedPasswords = new List<EncryptedPassword>();

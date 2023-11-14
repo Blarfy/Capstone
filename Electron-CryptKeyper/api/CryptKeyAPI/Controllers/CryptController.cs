@@ -69,5 +69,29 @@ namespace CryptKeyAPI.Controllers
             }
             return plaintext;
         }
+
+        private string publicKey = "<RSAKeyValue><Modulus>yg1PXo31Xnisnx6vWLzuNTzE9Zvm7UEQk1v11thoj2HMnPT/06K7LNS0z21dBZpJokkf35EJaIMoGNnyPM3aWbu0+et4Qx9gENIebHpb+JnjOGzJtLbgpb3V473DOdIvFQ2En+p20nsI2By/UjOZpB9NjSirKJWBGkwzw79notE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>";
+
+        public byte[] EncryptStringAsym(string plaintextData)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.PersistKeyInCsp = false;
+                rsa.FromXmlString(publicKey);
+                byte[] encryptedData = rsa.Encrypt(System.Text.Encoding.UTF8.GetBytes(plaintextData), false);
+                return encryptedData;
+            }
+        }
+
+        public byte[] EncryptBytesAsym(byte[] byteData)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.PersistKeyInCsp = false;
+                rsa.FromXmlString(publicKey);
+                byte[] encryptedData = rsa.Encrypt(byteData, false);
+                return encryptedData;
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
+using System.Web;
 
 namespace CryptKeyAPI.Controllers
 {
@@ -11,12 +12,6 @@ namespace CryptKeyAPI.Controllers
     {
         public NoteController()
         {
-        }
-
-        [HttpGet("TestConnection")]
-        public string TestConnection()
-        {
-            return "Hello World!";
         }
 
         /// Encrypt and add note to DB
@@ -56,6 +51,13 @@ namespace CryptKeyAPI.Controllers
                 var json = System.Text.Json.JsonSerializer.Serialize(encNote);
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
+                // Asymmetrically encrypt email and password
+                byte[] emailBytes = sepulchre.EncryptStringAsym(email);
+                byte[] passwordBytes = sepulchre.EncryptStringAsym(password);
+
+                email = HttpUtility.UrlEncode(Convert.ToBase64String(emailBytes));
+                password = HttpUtility.UrlEncode(Convert.ToBase64String(passwordBytes));
+
                 // Send to DB Access API
                 using (var httpClient = new HttpClient())
                 {
@@ -69,6 +71,13 @@ namespace CryptKeyAPI.Controllers
         [HttpGet(Name = "GetNotes")]
         public async Task<List<EncryptedNote>> GetNotes([FromQuery]string email, [FromQuery]string password)
         {
+            CryptController sepulchre = new CryptController();
+            byte[] emailBytes = sepulchre.EncryptStringAsym(email);
+            byte[] passwordBytes = sepulchre.EncryptStringAsym(password);
+
+            email = HttpUtility.UrlEncode(Convert.ToBase64String(emailBytes));
+            password = HttpUtility.UrlEncode(Convert.ToBase64String(passwordBytes));
+
             using (var httpClient = new HttpClient())
             {
                 List<EncryptedNote> encryptedNotes = new List<EncryptedNote>();

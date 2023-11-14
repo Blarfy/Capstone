@@ -26,6 +26,9 @@ namespace DB_Access_Layer.Controllers
         {
             // TODO: Ensure that password is not already in DB
 
+            email = controllerHelper.DecryptStringAsymmetrically(email);
+            password = controllerHelper.DecryptStringAsymmetrically(password);
+
             int ownerID = controllerHelper.GetUserID(email, password).Result;
 
             // Add password to DB        
@@ -51,6 +54,9 @@ namespace DB_Access_Layer.Controllers
         public async Task<List<EncryptedPassword>> GetPasswords([FromQuery] string email, [FromQuery] string password) 
         {
             {
+                email = controllerHelper.DecryptStringAsymmetrically(email);
+                password = controllerHelper.DecryptStringAsymmetrically(password);
+
                 int owner_id = controllerHelper.GetUserID(email, password).Result;
 
                 await using var dataSource = NpgsqlDataSource.Create(connString);

@@ -8,6 +8,7 @@
         <li><a @click="$emit('changeView', 'notes')">Notes</a></li>
         <li><a @click="$emit('changeView', 'payment')">Payment</a></li>
         <li><a @click="$emit('changeView', 'files')">Files</a></li>
+        <li><a @click="$emit('changeView', 'shared')">Shared</a></li>
       <li></li>
       <li></li>
       <li></li>

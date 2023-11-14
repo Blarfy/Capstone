@@ -14,6 +14,9 @@ namespace DB_Access_Layer.Controllers
         [HttpPost("AddNote")]
         public async Task<string> AddNote([FromQuery] string email, [FromQuery] string password, [FromBody] EncryptedNote encNote)
         {
+            email = controllerHelper.DecryptStringAsymmetrically(email);
+            password = controllerHelper.DecryptStringAsymmetrically(password);
+
             int ownerID = controllerHelper.GetUserID(email, password).Result; // Email and Password are to be asymmetrically decrypted later
 
             // Add note to DB
@@ -30,6 +33,9 @@ namespace DB_Access_Layer.Controllers
         [HttpGet("GetNotes")]
         public async Task<List<EncryptedNote>> GetNotes([FromQuery] string email, [FromQuery] string password)
         {
+            email = controllerHelper.DecryptStringAsymmetrically(email);
+            password = controllerHelper.DecryptStringAsymmetrically(password);
+
             int owner_id = controllerHelper.GetUserID(email, password).Result;
 
             await using var dataSource = NpgsqlDataSource.Create(connString);
