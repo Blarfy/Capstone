@@ -1,6 +1,7 @@
 <template>
   <div class="form-screen">
     <div class="form-body">
+        <a class="close-btn" @click="closeBtn">&times;</a>
         <h2>{{ title }}</h2>
         <form @submit.prevent="submitForm">
         <div v-for="(label, index) in labels" :key="index">
@@ -30,6 +31,9 @@ export default {
     submitForm() {
       this.$emit('form-submitted', this.formData);
     },
+    closeBtn() {
+      this.$emit('close-btn');
+    },
   },
 };
 </script>
@@ -50,7 +54,7 @@ export default {
 
 .form-body {
   background-color: #fff;
-  padding: 40px;
+  padding: 10px;
   border-radius: 5px;
   padding-left: 80px;
   padding-right: 80px;
@@ -61,6 +65,7 @@ export default {
 .form-body h2 {
   margin: 0;
   margin-bottom: 20px;
+  padding: 30px;
 }
 
 .form-body label {
@@ -83,6 +88,16 @@ export default {
   border: none;
   border-radius: 3px;
   cursor: pointer;
+}
+
+.close-btn {
+  margin-top: 10px;
+  margin-right: -150%;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
 }
 
 </style>

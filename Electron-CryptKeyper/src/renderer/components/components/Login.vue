@@ -8,24 +8,36 @@
         <label for="password">Password:</label>
         <input type="password" id="password" v-model="password" required>
         <label for="error" style="color: red;">{{ error }}</label>
-        <button type="submit">{{ loginBtnTxt }}</button>
+        <button type="submit">Login</button>
       </form>
+      <a class="register" @click="toggleRegister">Register</a>
     </div>
   </div>
+  <Register v-else-if="!isRegistered" @registered="toggleRegister"/>
 </template>
 
 <script>
+import Register from './Register.vue';
+
 export default {
+  name: 'Login',
+  components: {
+    Register
+  },
   data() {
     return {
       username: 'Gweppy',
       password: 'password',
       error: '',
-      loginBtnTxt: 'Login',
-      isLoggedIn: false
+      isLoggedIn: false,
+      isRegistered: true,
     };
   },
   methods: {
+    toggleRegister() {
+      this.isLoggedIn = !this.isLoggedIn;
+      this.isRegistered = !this.isRegistered;
+    },
     async login() {
       this.loginBtnTxt = 'Logging in...';
       this.error = '';
@@ -73,7 +85,7 @@ export default {
 
 .login-form {
   background-color: #fff;
-  padding: 20px;
+  padding: 50px;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   text-align: center;
@@ -104,5 +116,12 @@ export default {
   border: none;
   border-radius: 3px;
   cursor: pointer;
+  margin-bottom: 10%;
+}
+
+.register {
+  color: lightgray;
+  text-decoration: underline;
+  text-align: center; 
 }
 </style>

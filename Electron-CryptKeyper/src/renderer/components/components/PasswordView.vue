@@ -3,7 +3,7 @@
     <TopBar :title="barTitle" :is-sidebar-open="isSidebarOpen" @search-changed="searchQuery" />
 
     <div v-if="isFormOpen">
-      <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" />
+      <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
     </div>
     
     <div class="content" :class="{ 'open': isSidebarOpen }">
@@ -150,6 +150,7 @@ export default {
     },
     toggleForm() {
       this.isFormOpen = !this.isFormOpen;
+      console.log("toggleForm")
     },
     async handleFormSubmit(formData) {
       // Add Item
