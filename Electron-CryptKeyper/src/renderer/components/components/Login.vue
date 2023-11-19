@@ -8,7 +8,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" v-model="password" required>
         <label for="error" style="color: red;">{{ error }}</label>
-        <button type="submit">Login</button>
+        <button type="submit"> {{ loginBtnTxt }}</button>
       </form>
       <a class="register" @click="toggleRegister">Register</a>
     </div>
@@ -31,6 +31,7 @@ export default {
       error: '',
       isLoggedIn: false,
       isRegistered: true,
+      loginBtnTxt: 'Login'
     };
   },
   methods: {

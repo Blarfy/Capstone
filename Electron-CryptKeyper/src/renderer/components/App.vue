@@ -158,6 +158,16 @@ body {
 	}
 }
 
+.column p {
+  width: 95%;
+  white-space: nowrap;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 5px;
+  background-color: #c1c1c1;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .column {
     flex: 0 0 20%; /* On smaller screens, make each column take up 20% of the width */

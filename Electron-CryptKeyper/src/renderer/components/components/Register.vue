@@ -10,7 +10,7 @@
         <label for="confirmPassword">Confirm Master Password:</label>
         <input type="password" id="confirmPassword" v-model="confirmPassword" required>
         <label for="error" style="color: red;">{{ error }}</label>
-        <button type="submit">Register</button>
+        <button type="submit"> {{ registerBtnTxt }}</button>
       </form>
     </div>
   </div>
@@ -24,17 +24,34 @@ export default {
       password: '',
       confirmPassword: '',
       error: '',
-      isRegistered: false
+      isRegistered: false,
+      registerBtnTxt: 'Register'
     };
   },
   methods: {
     async register() {
-        if(true) { 
+      this.error = '';
+      if (this.password !== this.confirmPassword) {
+        this.error = 'Passwords do not match';
+        return;
+      }
+
+      try {
+        this.registerBtnTxt = 'Registering...';
+
+        const response = await fetch('https://localhost:7212/account?email=' + this.username + '&masterPass=' + this.password, {method: 'POST'});
+        
+        if(response.ok) { 
             this.isRegistered = true;
             this.$emit('registered');
         } else {
-            this.error = 'Passwords do not match';
+            throw new Error('Error registering account');
         }
+      } catch(error) {
+        this.error = 'Error registering account';
+        this.registerBtnTxt = 'Register';
+      }
+
     },
   },
 

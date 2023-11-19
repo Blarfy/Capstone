@@ -28,7 +28,8 @@ namespace CryptKeyAPI.Controllers
             using (var httpClient = new HttpClient())
             {
                 var response = httpClient.PostAsync($"https://localhost:7124/AccountsDAL/CreateAccount?email={email}&masterPass={masterPass}", null);
-                return await response.Result.Content.ReadAsStringAsync();
+                if (response.Result.IsSuccessStatusCode) return await response.Result.Content.ReadAsStringAsync();
+                else throw new Exception("Account creation failed");
             }
         }
 

@@ -26,7 +26,13 @@ namespace DB_Access_Layer.Controllers
             email = controllerHelper.DecryptStringAsymmetrically(email);
             masterPass = controllerHelper.DecryptStringAsymmetrically(masterPass);
 
+            var hashPass = BCrypt.HashPassword(masterPass);
+
             // TODO: Ensure that user does not already exist in DB
+            await using var checkCommand = NpgsqlDataSource.Create(connString).CreateCommand("SELECT user_name FROM users WHERE user_name = @user_name");
+            checkCommand.Parameters.AddWithValue("user_name", email);
+            await using var reader = await checkCommand.ExecuteReaderAsync();
+            if (await reader.ReadAsync()) throw new Exception("User already exists!");
 
             // Generate random key for user encryption
             var userKey = new byte[32];
@@ -39,10 +45,11 @@ namespace DB_Access_Layer.Controllers
             await using var dataSource = NpgsqlDataSource.Create(connString);
             await using var command = dataSource.CreateCommand("INSERT INTO users (user_name, user_pass, user_key) VALUES (@user_name, @user_pass, @user_key)");
             command.Parameters.AddWithValue("user_name", email);
-            command.Parameters.AddWithValue("user_pass", masterPass);
+            command.Parameters.AddWithValue("user_pass", hashPass);
             command.Parameters.AddWithValue("user_key", userKey);
-            await command.ExecuteNonQueryAsync();
-            return "Account created successfully!";
+            var resp = await command.ExecuteNonQueryAsync();
+            if (resp == 1) return "Account created successfully!";
+            else throw new Exception("Account creation failed!");
         }
 
         /// <summary>

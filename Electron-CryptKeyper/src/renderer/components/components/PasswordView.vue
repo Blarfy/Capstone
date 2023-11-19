@@ -9,19 +9,19 @@
     <div class="content" :class="{ 'open': isSidebarOpen }">
       <div class="column">
         <h2>Location</h2>
-        <p v-for="item in appSiteItems" :key="item.id">{{ item.appSite }}</p>
+        <p v-for="item in appSiteItems" :key="item.id" @click="copyField(item.appSite)">{{ item.appSite }}</p>
       </div>
       <div class="column">
         <h2>Email</h2>
-        <p v-for="item in emailItems" :key="item.id">{{ item.email }}</p>
+        <p v-for="item in emailItems" :key="item.id" @click="copyField(item.email)">{{ item.email }}</p>
       </div>
       <div class="column">
         <h2>Username</h2>
-        <p v-for="item in usernameItems" :key="item.id">{{ item.username }}</p>
+        <p v-for="item in usernameItems" :key="item.id" @click="copyField(item.username)">{{ item.username }}</p>
       </div>
       <div class="column">
         <h2>Password</h2>
-        <p v-for="item in passwordItems" :key="item.id">{{ item.password }}</p>
+        <p v-for="item in passwordItems" :key="item.id" @click="copyField(item.password)">{{ item.password }}</p>
       </div>
     </div>
     <StatusBlob :message="statusMessage" :is-error="isError" />
@@ -104,6 +104,28 @@ export default {
     }
   },
     methods: {
+    copyField(text) {
+      try {
+        if(!navigator.clipboard) throw('Unsupported browser');
+        navigator.clipboard.writeText(text);
+      } catch(error) {
+        // Fallback for insecure browsers / Localhost testing
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+
+      // Display status message for 1.5 seconds
+      this.statusMessage = 'Copied to clipboard!';
+      setTimeout(() => {
+        this.statusMessage = '';
+      }, 1500);
+    },
+
     searchQuery (query) {
       this.query = query;
     },

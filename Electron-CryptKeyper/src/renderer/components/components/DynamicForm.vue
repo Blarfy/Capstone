@@ -64,7 +64,7 @@ export default {
 
 .form-body h2 {
   margin: 0;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
   padding: 30px;
 }
 
