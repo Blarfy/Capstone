@@ -6,16 +6,8 @@
             <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
         </div>
 
-        <div class="content" :class="{ 'open': isSidebarOpen }">
-            <div class="column">
-                <h2>Title</h2>
-                <p v-for="item in titleItems" :key="item.id">{{ item.title }}</p>
-            </div>
-            <div class="column">
-                <h2>Note</h2>
-                <p v-for="item in noteItems" :key="item.id">{{ item.note }}</p>
-            </div>
-        </div>
+        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage" />
+
         <StatusBlob :message="statusMessage" :is-error="isError" />
         <button class="plus-button" @click="toggleForm">+</button>
     </div>
@@ -25,12 +17,15 @@
 import DynamicForm from './DynamicForm.vue';
 import TopBar from './TopBar.vue';
 import StatusBlob from './StatusBlob.vue';
+import DynamicItemDisplay from './DynamicItemDisplay.vue';
+
 export default {
     name: 'NotesView',
     components: {
         DynamicForm,
         TopBar,
-        StatusBlob
+        StatusBlob,
+        DynamicItemDisplay
     },
     props: ['isSidebarOpen', 'userLoginfo'],
     data() {
@@ -45,6 +40,7 @@ export default {
             numberOfFields: 2,
             fieldLabels: ['Title', 'Note'],
             fieldRequired: [true, true],
+            hiddenFields: [false, false],
         };
     },
     computed: {
@@ -55,20 +51,17 @@ export default {
         },
         titleItems() {
             return this.filteredNotes.map((note) => {
-                return {
-                    id: note.id,
-                    title: note.plaintextTitle,
-                };
+                return note.plaintextTitle;
             });
         },
         noteItems() {
             return this.filteredNotes.map((note) => {
-                return {
-                    id: note.id,
-                    note: note.plaintextNote,
-                };
+                return note.plaintextNote;
             });
         },
+        filteredFields() {
+            return [this.titleItems, this.noteItems]
+        }
     },
     created() {
         if (this.userLoginfo) {
@@ -90,6 +83,13 @@ export default {
 
         toggleForm() {
             this.isFormOpen = !this.isFormOpen;
+        },
+
+        displayCopyMessage() {
+            this.statusMessage = 'Copied to clipboard!';
+            setTimeout(() => {
+                this.statusMessage = '';
+            }, 1500);
         },
 
         async fetchNotes(email, password, key) {

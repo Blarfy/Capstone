@@ -5,25 +5,9 @@
     <div v-if="isFormOpen">
       <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
     </div>
+
+    <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage"/>
     
-    <div class="content" :class="{ 'open': isSidebarOpen }">
-      <div class="column">
-        <h2>Location</h2>
-        <p v-for="item in appSiteItems" :key="item.id" @click="copyField(item.appSite)">{{ item.appSite }}</p>
-      </div>
-      <div class="column">
-        <h2>Email</h2>
-        <p v-for="item in emailItems" :key="item.id" @click="copyField(item.email)">{{ item.email }}</p>
-      </div>
-      <div class="column">
-        <h2>Username</h2>
-        <p v-for="item in usernameItems" :key="item.id" @click="copyField(item.username)">{{ item.username }}</p>
-      </div>
-      <div class="column">
-        <h2>Password</h2>
-        <p v-for="item in passwordItems" :key="item.id" @click="copyField(item.password)">{{ item.password }}</p>
-      </div>
-    </div>
     <StatusBlob :message="statusMessage" :is-error="isError" />
     <button class="plus-button" @click="toggleForm">+</button>
   </div>
@@ -33,13 +17,15 @@
 import DynamicForm from './DynamicForm.vue';
 import TopBar from './TopBar.vue';
 import StatusBlob from './StatusBlob.vue';
+import DynamicItemDisplay from './DynamicItemDisplay.vue';
 
 export default {
   name: 'PasswordView',
   components: {
     DynamicForm,
     TopBar,
-    StatusBlob
+    StatusBlob,
+    DynamicItemDisplay
 },
   props: ['isSidebarOpen', 'userLoginfo'],
   data() {
@@ -54,6 +40,7 @@ export default {
       numberOfFields: 4,
       fieldLabels: ['Location', 'Email', 'Username', 'Password'],
       fieldRequired: [true, false, false, true],
+      hiddenFields: [false, false, false, true],
     };
   },
   computed: {
@@ -64,30 +51,38 @@ export default {
     },
     appSiteItems() {
       return this.filteredPasswords.map((password) => {
-        return { id: password.id, appSite: password.plaintextLocation };
+        return password.plaintextLocation;
       });
     },
     emailItems() {
       return this.filteredPasswords.map((password) => {
         if (password.plaintextEmail === '') {
-          return { id: password.id, email: 'ㅤ' };
+          return 'ㅤ';
         }
-        else return { id: password.id, email: password.plaintextEmail };
+        else return password.plaintextEmail;
       });
     },
     usernameItems() {
       return this.filteredPasswords.map((password) => {
         if (password.plaintextUsername === '') {
-          return { id: password.id, username: 'ㅤ' };
+          return 'ㅤ';
         }
-        else return { id: password.id, username: password.plaintextUsername };
+        else return password.plaintextUsername;
       });
     },
     passwordItems() {
       return this.filteredPasswords.map((password) => {
-        return { id: password.id, password: password.plaintextIVPass };
+        return password.plaintextIVPass;
       });
     },
+    filteredFields() {
+        return [
+          this.appSiteItems,
+          this.emailItems,
+          this.usernameItems,
+          this.passwordItems
+        ]
+    }
   },
   created() {
     if (this.userLoginfo) {
@@ -104,30 +99,16 @@ export default {
     }
   },
     methods: {
-    copyField(text) {
-      try {
-        if(!navigator.clipboard) throw('Unsupported browser');
-        navigator.clipboard.writeText(text);
-      } catch(error) {
-        // Fallback for insecure browsers / Localhost testing
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
 
-      // Display status message for 1.5 seconds
+    searchQuery (query) {
+      this.query = query;
+    },
+
+    displayCopyMessage() {
       this.statusMessage = 'Copied to clipboard!';
       setTimeout(() => {
         this.statusMessage = '';
       }, 1500);
-    },
-
-    searchQuery (query) {
-      this.query = query;
     },
 
     async fetchPasswords(email, password, key) {

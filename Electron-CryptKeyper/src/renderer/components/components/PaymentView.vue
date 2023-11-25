@@ -6,7 +6,7 @@
             <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
         </div>
 
-        <div class="content" :class="{ 'open': isSidebarOpen}">
+        <!-- <div class="content" :class="{ 'open': isSidebarOpen}">
             <div class="column">
                 <h2>Name</h2>
                 <p v-for="item in nameItems" :key="item.id">{{ item.name }}</p>
@@ -27,7 +27,9 @@
                 <h2>Expiration Year</h2>
                 <p v-for="item in expirationYearItems" :key="item.id">{{ item.expirationYear }}</p>
             </div>
-        </div>
+        </div> -->
+
+        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields"/>
         <StatusBlob :message="statusMessage" :is-error="isError" />
         <button class="plus-button" @click="toggleForm">+</button>
     </div>
@@ -37,13 +39,15 @@
 import DynamicForm from './DynamicForm.vue';
 import TopBar from './TopBar.vue';
 import StatusBlob from './StatusBlob.vue';
+import DynamicItemDisplay from './DynamicItemDisplay.vue';
 
 export default {
     name: 'PaymentView',
     components: {
         DynamicForm, // Replace with payment form later
         TopBar,
-        StatusBlob
+        StatusBlob,
+        DynamicItemDisplay
     },
     props: ['isSidebarOpen', 'userLoginfo'],
     data() {
@@ -106,6 +110,15 @@ export default {
                 };
             });
         },
+        filteredFields() {
+            return [
+                this.nameItems,
+                this.cardNumberItems,
+                this.cvvItems,
+                this.expirationMonthItems,
+                this.expirationYearItems
+            ]
+        }
     },
     created() {
         if (this.userLoginfo) {
@@ -130,6 +143,25 @@ export default {
         },
 
         // Fetch notes
+        async fetchPayments(email, password, key) {
+            try {
+                this.statusMessage = 'Fetching payments...';
+                this.isError = false;
+                const response = await fetch('http://localhost:7212/payments', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'email': email,
+                        'password': password,
+                        'key': key
+                    }
+                });
+            } catch (error) {
+                console.error(`An error occurred: ${error}`);
+                this.statusMessage = 'An error occurred. Failed to retrieve data.';
+                this.isError = true;
+            }
+        },
 
         // Handle form submit
     }

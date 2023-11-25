@@ -159,7 +159,7 @@ body {
 }
 
 .column p {
-  width: 95%;
+  width: 98%;
   white-space: nowrap;
   border-radius: 8px;
   font-weight: bold;
