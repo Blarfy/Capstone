@@ -15,6 +15,8 @@
       <li></li>
       <li></li>
       <li><a href="#:>">:></a></li>
+      <li><a @click="$emit('reload')">Refresh</a></li>
+      <li><a @click="logout">Logout</a></li>
       </ul>
     </nav>
     <button @click="toggleSidebar" class="toggle-button">&#9776;</button>
@@ -27,6 +29,10 @@ export default {
   methods: {
     toggleSidebar() {
       this.$emit('toggleSidebar'); // Emit an event to toggle the sidebar in the parent
+    },
+    logout() {
+      this.$emit('logout');
+      this.toggleSidebar();
     },
   },
 };

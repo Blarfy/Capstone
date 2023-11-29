@@ -6,15 +6,19 @@
                 <section class="item-holder" v-for="(item, index) in filteredFields[count]" :key="item.id">
                     <p :key="item.id" :class="{ 'hidden-text': isFieldHidden[count][index]}" @click="copyField(filteredFields[count][index])">{{ filteredFields[count][index] }} </p>
                     <button v-if="hiddenFields[count]" class="show-button" @click="showField(count,index)">👁</button>
+
+
+
                 </section>
             </div>
 
-            <!-- <div class="final column">
-                <h2></h2>
+            <div class="button-column">
+                <h2>Actions </h2>
                 <section class="item-holder" v-for="(item, index) in filteredFields[0]" :key="item.id">
-                    <button class="delete-button" @click="deleteItem(filteredFields[0][0])">🗑️</button>
+                    <button class="share-button" @click="$emit('share-item', index)">📤</button>
+                    <button class="delete-button" @click="$emit('delete-item', index)">🗑️</button>
                 </section>
-            </div> -->
+            </div>
         </div>
     </div>
 
@@ -32,25 +36,21 @@
         computed: {
         },
         created() {
-            this.setupHiddenFields();
+            this.setupItemFields();
         },
 
         watch: {
             filteredFields() {
-                this.setupHiddenFields();
+                this.setupItemFields();
             }
         },
         
         methods: {
-            deleteItem(id) {
-                console.log(this.filteredFields)
-            },
-
             showField(count, index) {
                 this.$set(this.isFieldHidden[count], index, !this.isFieldHidden[count][index]);
             },
 
-            setupHiddenFields() {
+            setupItemFields() {
                 let tempHidden = [];
                 for(let i = 0; i < this.fieldNames.length; i++) {
                     if (this.hiddenFields[i]) {
@@ -94,8 +94,86 @@
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-around;
-    align-items: center;
+    align-items: stretch;
     align-content: center;
+    flex: 1;
+}
+
+.column {
+  margin-top: 20px;
+  padding: 15px;
+  width: 25%;
+  border: 1px solid #ccc;
+  flex: 1;
+  align-items: start;
+}
+
+.button-column {
+    margin-top: 20px;
+    padding: 15px;
+    width: 10%;
+    border: 1px solid #ccc;
+    flex-shrink: 6;
+    display: flex;
+    flex-direction: column;
+}
+
+.button-column h2 {
+    font-weight: bold;
+    font-size: 28px;
+    border-bottom: 2px solid darkgray;
+    text-align: center;
+}
+
+.column h2 {
+  font-weight: bold;
+  font-size: 28px;
+  border-bottom: 2px solid darkgray;
+  text-align: center;
+}
+
+.column p {
+  width: 98%;
+  white-space: nowrap;
+  margin: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 5px;
+  padding-left: 0px;
+  padding-right: 0px;
+  background-color: #c1c1c1;
+  text-align: center;
+  font-size: large;
+}
+
+.delete-button {
+    border: 2px solid lightgrey;
+    background-color: darkslategrey;
+    position: relative;
+    color: white;
+    padding: 8px;
+    text-align: center;
+    font-size: large;
+}
+
+.delete-button:hover {
+    background-color: crimson;
+    color: black;
+}
+
+.share-button {
+    border: 2px solid lightgrey;
+    background-color: darkslategrey;
+    position: relative;
+    color: white;
+    padding: 8px;
+    text-align: center;
+    font-size: large;
+}
+
+.share-button:hover {
+    background-color: aquamarine;
+    color: black;
 }
 
 .decrypted-item {
@@ -109,7 +187,7 @@
     width: 100%;
     border-radius: 5px;
     padding: 5px;
-    margin: 5px;
+    margin: 8px;
 }
 
 .item-holder {
@@ -119,6 +197,7 @@
     justify-content: space-around;
     align-items: center;
     align-content: center;
+    height: 60px;
     width: 100%;
 }
 
@@ -133,18 +212,9 @@
     text-align: center;
 }
 
-.delete-button {
-    margin-left: auto;
-    margin-right: 20px;
-    border: 2px solid lightgrey;
-    background-color: darkslategrey;
-    position: relative;
-    color: white;
-}
-
 .show-button {
     margin-left: auto;
-    margin-right: 20px;
+    margin-right: 0px;
     border: 2px solid transparent;
     background-color: transparent;
     position: relative;
@@ -154,10 +224,5 @@
 
 .hidden-text {
     -webkit-text-security: disc;
-}
-
-.delete-button:hover {
-    background-color: crimson;
-    color: black;
 }
 </style>

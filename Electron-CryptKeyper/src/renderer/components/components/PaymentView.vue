@@ -128,6 +128,7 @@ export default {
     watch: {
         userLoginfo: {
             handler: function (val) {
+                this.decryptedPayments = [];
                 this.fetchPayments(val.email, val.password, val.key);
             },
             deep: true

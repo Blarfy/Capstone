@@ -92,7 +92,7 @@ export default {
   watch: {
     userLoginfo: {
       handler: function (val) {
-        // Update anything upon user login info change
+        this.decryptedPasswords = [];
         this.fetchPasswords(val.email, val.password, val.key);
       },
       deep: true

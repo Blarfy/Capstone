@@ -21,6 +21,12 @@ import Register from './Register.vue';
 
 export default {
   name: 'Login',
+  props: ['isLoggingOut'],
+  watch: {
+    isLoggingOut() {
+      this.isLoggedIn = false;
+    }
+  },
   components: {
     Register
   },
@@ -53,6 +59,9 @@ export default {
 
           // User is authenticated; set isLoggedIn to true
           this.isLoggedIn = true;
+          this.username = '';
+          this.password = '';
+          this.loginBtnTxt = 'Login';
         } else {
           // Handle authentication failure
           this.error = 'Invalid username or password';

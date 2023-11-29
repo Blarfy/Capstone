@@ -71,6 +71,7 @@ export default {
     watch: {
         userLoginfo: {
             handler: function (val) {
+                this.decryptedNotes = [];
                 this.fetchNotes(val.email, val.password, val.key);
             },
             deep: true

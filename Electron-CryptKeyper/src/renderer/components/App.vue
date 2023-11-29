@@ -1,7 +1,7 @@
 <template>
   <div>
-    <login-component @userLogin="userLogin" @changeView="changeView"></login-component>
-    <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" @changeView="changeView"/>
+    <login-component :isLoggingOut="userLogout" @userLogin="userLogin" @changeView="changeView"></login-component>
+    <sidebar-component :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" @changeView="changeView" @reload="reload" @logout="logout"/>
     <password-view v-show="viewPassword" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
     <notes-view v-show="viewNotes" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
     <payment-view v-show="viewPayment" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
@@ -27,6 +27,7 @@ export default {
   },
   data() {
     return {
+      userLogout: false,
       viewPassword: false,
       viewNotes: false,
       viewPayment: false,
@@ -60,8 +61,27 @@ export default {
           this.viewPayment = false;
           this.viewFiles = true;
           break;
+        default:
+          this.viewPassword = false;
+          this.viewNotes = false;
+          this.viewPayment = false;
+          this.viewFiles = false;
+          break;
       }
-    }
+    },
+    async reload() {
+      let temp = this.userLoginfo;
+      this.userLoginfo = null;
+      await this.$nextTick();
+      this.userLoginfo = temp;
+    },
+    logout() {
+      this.changeView('none');
+      this.userLogout = !this.userLogout;
+      this.userLoginfo.email = '';
+      this.userLoginfo.password = '';
+      this.userLoginfo.key = '';
+    },
   },
   setup() {
     const isSidebarOpen = ref(false);
@@ -80,7 +100,7 @@ export default {
       isSidebarOpen,
       toggleSidebar,
       userLoginfo,
-      userLogin
+      userLogin,
     };
   },
 };
@@ -106,22 +126,6 @@ body {
   margin-left: 200px;
 }
 
-.column {
-  margin-top: 20px;
-  padding: 15px;
-  width: 25%;
-  /* max-width: 30%; */
-  /* Add flexbox stuff here, use space-evenly to have columns placed properly */
-  border: 1px solid #ccc;
-  flex: 1;
-}
-
-.column h2 {
-  font-weight: bold;
-  font-size: 28px;
-  border-bottom: 2px solid darkgray;
-  text-align: center;
-}
 .plus-button { 
 	border: 2px solid lightgrey;
 	background-color: darkslategrey;
@@ -156,17 +160,7 @@ body {
 		height: 0.2em;
 		width: 1em;
 	}
-}
-
-.column p {
-  width: 98%;
-  white-space: nowrap;
-  border-radius: 8px;
-  font-weight: bold;
-  padding: 5px;
-  background-color: #c1c1c1;
-  text-align: center;
-}
+} 
 
 @media (max-width: 768px) {
   .column {
