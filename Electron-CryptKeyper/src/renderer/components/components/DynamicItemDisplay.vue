@@ -102,7 +102,7 @@
 .column {
   margin-top: 20px;
   padding: 15px;
-  width: 25%;
+  width: 15%;
   border: 1px solid #ccc;
   flex: 1;
   align-items: start;
@@ -144,6 +144,7 @@
   background-color: #c1c1c1;
   text-align: center;
   font-size: large;
+  overflow:hidden;
 }
 
 .delete-button {

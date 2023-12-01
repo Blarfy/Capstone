@@ -6,30 +6,7 @@
             <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
         </div>
 
-        <!-- <div class="content" :class="{ 'open': isSidebarOpen}">
-            <div class="column">
-                <h2>Name</h2>
-                <p v-for="item in nameItems" :key="item.id">{{ item.name }}</p>
-            </div>
-            <div class="column">
-                <h2>Card Number</h2>
-                <p v-for="item in cardNumberItems" :key="item.id">{{ item.cardNumber }}</p>
-            </div>
-            <div class="column">
-                <h2>CVV</h2>
-                <p v-for="item in cvvItems" :key="item.id">{{ item.cvv }}</p>
-            </div>
-            <div class="column">
-                <h2>Expiration Month</h2>
-                <p v-for="item in expirationMonthItems" :key="item.id">{{ item.expirationMonth }}</p>
-            </div>
-            <div class="column">
-                <h2>Expiration Year</h2>
-                <p v-for="item in expirationYearItems" :key="item.id">{{ item.expirationYear }}</p>
-            </div>
-        </div> -->
-
-        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields"/>
+        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage"/>
         <StatusBlob :message="statusMessage" :is-error="isError" />
         <button class="plus-button" @click="toggleForm">+</button>
     </div>
@@ -62,52 +39,38 @@ export default {
             numberOfFields: 5,
             fieldLabels: ['Name', 'Card Number', 'CVV', 'Expiration Month', 'Expiration Year'],
             fieldRequired: [true, true, true, true, false],
+            hiddenFields: [false, true, true, false, false],
         };
     },
     computed: {
         filteredPayments() {
             return this.decryptedPayments.filter((payment) => {
-                return payment.plaintextName.includes(this.query) || payment.plaintextCardNumber.includes(this.query);
+                return payment.plaintextCardName.includes(this.query) || payment.plaintextCardNumber.includes(this.query);
             });
         },
         nameItems() {
             return this.filteredPayments.map((payment) => {
-                return {
-                    id: payment.id,
-                    name: payment.plaintextName,
-                };
+                return payment.plaintextCardName;
             });
         },
         cardNumberItems() {
             return this.filteredPayments.map((payment) => {
-                return {
-                    id: payment.id,
-                    cardNumber: payment.plaintextCardNumber,
-                };
+                return payment.plaintextCardNumber;
             });
         },
         cvvItems() {
             return this.filteredPayments.map((payment) => {
-                return {
-                    id: payment.id,
-                    cvv: payment.plaintextCVV,
-                };
+                return payment.plaintextCardCVV;
             });
         },
         expirationMonthItems() {
             return this.filteredPayments.map((payment) => {
-                return {
-                    id: payment.id,
-                    expirationMonth: payment.plaintextExpirationMonth,
-                };
+                return payment.plaintextCardExpMonth;
             });
         },
         expirationYearItems() {
             return this.filteredPayments.map((payment) => {
-                return {
-                    id: payment.id,
-                    expirationYear: payment.plaintextExpirationYear,
-                };
+                return payment.plaintextCardExpYear;
             });
         },
         filteredFields() {
@@ -139,16 +102,23 @@ export default {
             this.query = query;
         },
 
+        displayCopyMessage() {
+            this.statusMessage = 'Copied to clipboard!';
+            setTimeout(() => {
+                this.statusMessage = '';
+            }, 1500);
+        },
+
         toggleForm() {
             this.isFormOpen = !this.isFormOpen;
         },
 
-        // Fetch notes
+        // Fetch payments
         async fetchPayments(email, password, key) {
             try {
                 this.statusMessage = 'Fetching payments...';
                 this.isError = false;
-                const response = await fetch('http://localhost:7212/payments', {
+                const response = await fetch('https://localhost:7212/payment?email=' + email + "&password=" + password, { 
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -157,6 +127,32 @@ export default {
                         'key': key
                     }
                 });
+
+                if (response.status === 200) {
+                    const data = await response.json();
+                    this.statusMessage = 'Decrypting payments...';
+
+                    // Send encrypted data to decrypt function as a POST request
+                    const decryptedData = await fetch('https://localhost:7212/payment/DecryptPayments?key=' + key, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic ' + btoa(email + ':' + password), // Check this later
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (decryptedData.ok) {
+                        this.decryptedPayments = await decryptedData.json();
+                        this.statusMessage = '';
+                    } else {
+                        this.statusMessage = 'Failed to decrypt data. Verify Login Information.';
+                        this.isError = true;
+                    }
+                } else {
+                    this.statusMessage = 'Failed to retrieve data. Verify Login Information.';
+                    this.isError = true;
+                }   
             } catch (error) {
                 console.error(`An error occurred: ${error}`);
                 this.statusMessage = 'An error occurred. Failed to retrieve data.';
@@ -165,6 +161,41 @@ export default {
         },
 
         // Handle form submit
+        async handleFormSubmit(formData) {
+            try {
+                this.formTitle = 'Adding payment...';
+
+                const response = await fetch('https://localhost:7212/payment?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&strKey=' + this.userLoginfo.key, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(this.userLoginfo.email + ':' + this.userLoginfo.password), // Check this later
+                    },
+                    body: JSON.stringify({
+                        plaintextCardName: formData[0],
+                        plaintextCardNumber: formData[1],
+                        plaintextCardCVV: formData[2],
+                        plaintextCardExpMonth: formData[3],
+                        plaintextCardExpYear: formData[4],
+                    }),
+                });
+
+                if (response.status === 200) {
+                    this.statusMessage = 'Payment added successfully!';
+                    this.isError = false;
+                    this.toggleForm();
+                    this.fetchPayments(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
+                } else {
+                    this.statusMessage = 'Failed to add payment. Verify Login Information.';
+                    this.isError = true;
+                }
+
+            } catch (error) {
+                console.error(`An error occurred: ${error}`);
+                this.statusMessage = 'An error occurred. Failed to add payment.';
+                this.isError = true;
+            }
+        },
     }
 }
 </script>

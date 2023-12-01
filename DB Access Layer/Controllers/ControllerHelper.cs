@@ -54,6 +54,21 @@ namespace DB_Access_Layer.Controllers
             }
             else return -1;
         }
+        
+        // Used for getting user ID from just a username
+        public async Task<int> GetUserID(string username)
+        {
+            await using var dataSource = NpgsqlDataSource.Create(getConnString());
+            await using var command = dataSource.CreateCommand("SELECT user_id FROM users WHERE user_name = @user_name");
+            command.Parameters.AddWithValue("user_name", username);
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                return reader.GetInt32(0);
+            }
+            else return -1;
+        }
 
         public string DecryptStringAsymmetrically(string encryptedData)
         {

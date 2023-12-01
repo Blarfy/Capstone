@@ -20,8 +20,6 @@ namespace CryptKeyAPI.Controllers
         {
             byte[] key = new byte[32];
             key = Convert.FromBase64String(strKey);
-            // TODO: Ensure there is no note with the same title in DB
-            // Do this in DB Access and return error message if note already exists
 
             // Encrypt title and note with key
             using (Aes myAes = Aes.Create())
