@@ -113,17 +113,19 @@ namespace CryptKeyAPI.Controllers
 
             foreach (EncryptedPayment encryptedPayment in encryptedPayments)
             {
+                // Extract IV from encrypted payment
                 byte[] iv = new byte[BitConverter.ToInt32(encryptedPayment.encryptedCardCVV, 0)];
                 Array.Copy(encryptedPayment.encryptedCardCVV, 4, iv, 0, iv.Length);
                 byte[] encryptedCVVNoIV = new byte[encryptedPayment.encryptedCardCVV.Length - iv.Length - 4];
                 Array.Copy(encryptedPayment.encryptedCardCVV, iv.Length + 4, encryptedCVVNoIV, 0, encryptedCVVNoIV.Length);
 
+                // Decrypt information
                 CryptController sepulchre = new CryptController();
-                string decryptedName = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardName, keyBytes, encryptedPayment.encryptedCardName);
-                string decryptedNumber = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardNumber, keyBytes, encryptedPayment.encryptedCardNumber);
+                string decryptedName = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardName, keyBytes, iv);
+                string decryptedNumber = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardNumber, keyBytes, iv);
                 string decryptedCVV = sepulchre.DecryptStringFromBytes_Aes(encryptedCVVNoIV, keyBytes, iv);
-                string decryptedExpMonth = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardExpMonth, keyBytes, encryptedPayment.encryptedCardExpMonth);
-                string decryptedExpYear = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardExpYear, keyBytes, encryptedPayment.encryptedCardExpYear);
+                string decryptedExpMonth = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardExpMonth, keyBytes, iv);
+                string decryptedExpYear = sepulchre.DecryptStringFromBytes_Aes(encryptedPayment.encryptedCardExpYear, keyBytes, iv);
 
                 var decPay = new DecryptedPayment
                 {

@@ -5,6 +5,7 @@
     <password-view v-show="viewPassword" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
     <notes-view v-show="viewNotes" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
     <payment-view v-show="viewPayment" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
+    <shared-view v-show="viewShared" :userLoginfo="userLoginfo" :isSidebarOpen="isSidebarOpen" />
   </div> 
 </template>
 
@@ -14,6 +15,7 @@ import SidebarComponent from './components/SidebarComponent.vue';
 import PasswordView from './components/PasswordView.vue';
 import NotesView from './components/NotesView.vue';
 import PaymentView from './components/PaymentView.vue';
+import SharedView from './components/SharedView.vue';
 import { ref } from 'vue';
 
 export default {
@@ -23,7 +25,8 @@ export default {
     SidebarComponent,
     PasswordView,
     NotesView,
-    PaymentView
+    PaymentView,
+    SharedView,
   },
   data() {
     return {
@@ -32,6 +35,7 @@ export default {
       viewNotes: false,
       viewPayment: false,
       viewFiles: false,
+      viewShared: false,
     }
   },
   methods: {
@@ -42,24 +46,35 @@ export default {
           this.viewNotes = false;
           this.viewPayment = false;
           this.viewFiles = false;
+          this.viewShared = false;
           break;
         case 'notes':
           this.viewPassword = false;
           this.viewNotes = true;
           this.viewPayment = false;
           this.viewFiles = false;
+          this.viewShared = false;          
           break;
         case 'payment':
           this.viewPassword = false;
           this.viewNotes = false;
           this.viewPayment = true;
           this.viewFiles = false;
+          this.viewShared = false;
           break;
         case 'files':
           this.viewPassword = false;
           this.viewNotes = false;
           this.viewPayment = false;
           this.viewFiles = true;
+          this.viewShared = false;
+          break;
+        case 'shared':
+          this.viewPassword = false;
+          this.viewNotes = false;
+          this.viewPayment = false;
+          this.viewFiles = false;
+          this.viewShared = true;
           break;
         default:
           this.viewPassword = false;

@@ -136,9 +136,7 @@ export default {
                     const decryptedData = await fetch('https://localhost:7212/payment/DecryptPayments?key=' + key, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Basic ' + btoa(email + ':' + password), // Check this later
-                        },
+                            'Content-Type': 'application/json'                        },
                         body: JSON.stringify(data),
                     });
 
