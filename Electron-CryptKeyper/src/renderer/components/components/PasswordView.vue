@@ -3,7 +3,7 @@
     <TopBar :title="barTitle" :is-sidebar-open="isSidebarOpen" @search-changed="searchQuery" />
 
     <div v-if="isFormOpen">
-      <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
+      <DynamicForm :is-generator="true" :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" @copied="displayCopyMessage" />
     </div>
 
     <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage"/>
@@ -18,6 +18,7 @@ import DynamicForm from './DynamicForm.vue';
 import TopBar from './TopBar.vue';
 import StatusBlob from './StatusBlob.vue';
 import DynamicItemDisplay from './DynamicItemDisplay.vue';
+import Generator from './Generator.vue';
 
 export default {
   name: 'PasswordView',
@@ -25,7 +26,8 @@ export default {
     DynamicForm,
     TopBar,
     StatusBlob,
-    DynamicItemDisplay
+    DynamicItemDisplay,
+    Generator
 },
   props: ['isSidebarOpen', 'userLoginfo'],
   data() {

@@ -11,16 +11,24 @@
         <button type="submit">Submit</button>
         </form>
     </div>
+    <Generator v-if="isGenerator" @copied="$emit('copied')"/>
   </div>
 </template>
 
 <script>
+import Generator from './Generator.vue';
+
 export default {
+  name: 'DynamicForm',
+  components: {
+    Generator,
+  },
   props: {
     title: String,
     count: Number,
     labels: Array,
     requiredFields: Array, // Array of booleans indicating whether or not a field is required
+    isGenerator: Boolean,
   },
   data() {
     return {
