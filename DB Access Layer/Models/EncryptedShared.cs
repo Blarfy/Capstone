@@ -2,8 +2,8 @@
 {
     public class EncryptedShared
     {
-        string itemType { get; set; }
-        Object item { get; set; }
+        public string itemType { get; set; }
+        public Object item { get; set; }
 
         public EncryptedShared(string itemType, Object item)
         {

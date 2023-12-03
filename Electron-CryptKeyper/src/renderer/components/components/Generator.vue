@@ -127,10 +127,8 @@ input[type="range"] {
 
 #password-output {
   overflow: visible;
-  margin: 0 -30%;
-  margin-top: 20px;
+  margin: 20px -30%;
   font-weight: bold;
-  margin-bottom: 20px;
 }
 
 #copy-button {

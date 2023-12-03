@@ -122,7 +122,6 @@ export default {
 
                     if (decryptedData.ok) {
                         this.decryptedNotes = await decryptedData.json();
-                        console.log(this.decryptedNotes)
                         this.statusMessage = '';
                     } else {
                         this.statusMessage = 'Failed to decrypt data. Verify Login Information.';
