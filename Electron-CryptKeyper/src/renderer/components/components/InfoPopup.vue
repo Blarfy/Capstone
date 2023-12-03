@@ -1,9 +1,14 @@
 <template>
 <div class="info-screen" v-if="isOpen">
-    <div class="info-content" :class="{'open': isOpenClass}">
+    <div class="info-content" :class="{'open': isOpenDelayed}">
+        <h2>GWAGH</h2>
         <section style="padding: 20px;">
-            <!-- Data goes here -->
-            <div>{{ data.item }}</div>
+          <!-- MAKE THESE COPY WHEN YOU CLICK EITHER SIDE -->
+          <!-- ALSO MAKE THEM BIGGER?? ARE THEY MAYBE TOO BIG NOW??? -->
+            <div class="fullField" v-for="(field, index) in fieldTitles" :key="index">
+                <div style="font-weight: bolder;">{{ field }}</div>
+                <div>{{ fieldValues[index] }}</div>
+            </div>
         </section>  
     </div>
     <div class="info-clickbox" @click="closeInfoPopup"></div> 
@@ -14,7 +19,10 @@
 export default {
   data() {
     return {
-        isOpenClass: false,
+        isOpenDelayed: false,
+        type: '',
+        fieldTitles: [],
+        fieldValues: [],
     };
   },
   methods: {
@@ -22,19 +30,35 @@ export default {
       this.$emit('close-info-popup');
     },
   },
-    props: {
-        isOpen: Boolean,
-        data: Object,
-        type: String,
-    },
+    props: [ 'isOpen', 'chosenItem'],
     watch: {
         async isOpen() {
             // Wait .1 seconds for isOpen to be set to true before setting isOpenClass to true
             await new Promise((resolve) => setTimeout(resolve, 100));
-            this.isOpenClass = this.isOpen;
+            this.isOpenDelayed = this.isOpen;
         },
-        data() {
+        chosenItem() {
             // Change how data is displayed here
+
+            switch (this.chosenItem.itemType) {
+                case 'password':
+                    this.type = 'password';
+                    this.fieldTitles = ['URL/Location', 'Email', 'Username', 'Password'];
+                    this.fieldValues = [this.chosenItem.item.plaintextLocation, this.chosenItem.item.plaintextEmail, this.chosenItem.item.plaintextUsername, this.chosenItem.item.plaintextIVPass];
+                    break;
+                case 'payment':
+                    this.type = 'payment';
+                    this.fieldTitles = ['Card Name', 'Card Number', 'CVV', 'Expiration Date'];
+                    this.fieldValues = [this.chosenItem.item.plaintextCardName, this.chosenItem.item.plaintextCardNumber, this.chosenItem.item.plaintextCardCVV, this.chosenItem.item.plaintextCardExpMonth + '/' + this.chosenItem.item.plaintextCardExpYear];
+                    break;
+                case 'note':
+                    this.type = 'note';
+                    this.fieldTitles = ['Title', 'Note'];
+                    this.fieldValues = [this.chosenItem.item.plaintextTitle, this.chosenItem.item.plaintextNote];
+                    break;
+                default:
+                    break;
+            }
         },
     },
 };
@@ -74,6 +98,26 @@ export default {
 
 .info-content.open {
   width: 40%;
-  margin-top: 60px;
+  margin-top: 0px;
+}
+
+.fullField {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #c1c1c1;
+}
+
+.fullField div {
+    margin: 5px;
+    font-size:x-large;
+}
+
+.info-content h2 {
+  margin: 0;
+  padding: 15px;
+  background-color: #fff;
+  border-bottom: 1px solid #c1c1c1;
 }
 </style>

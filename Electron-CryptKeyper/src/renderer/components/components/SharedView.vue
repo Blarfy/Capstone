@@ -3,16 +3,17 @@
         <TopBar :title="barTitle" :is-sidebar-open="isSidebarOpen" @search-changed="searchQuery"></TopBar>
 
         <ul class="list" style="list-style-type: none;" :class="{'aside': isSidebarOpen}">
-            <li v-for="(newTitle, index) in filteredShared" :key="index">
+            <li v-for="(item, index) in filteredShared" :key="index">
                 <div class="item-container" @click="togglePopup(index)">
-                    <div class="field">{{ filteredShared }}</div>
+                    <h2>{{ item }}</h2>
+                    <div class="field">{{ decryptedShared[index].itemType[0].toUpperCase() + decryptedShared[index].itemType.slice(1) }}</div>
                 </div>
             </li>
         </ul>
 
         <StatusBlob :message="statusMessage" :is-error="isError"></StatusBlob>
 
-        <InfoPopup :data="decryptedShared[selectedItem]" :is-open="isInfoOpen" @close-info-popup="togglePopup"></InfoPopup>
+        <InfoPopup :chosenItem="decryptedShared[selectedItem]" :is-open="isInfoOpen" @close-info-popup="togglePopup"></InfoPopup>
 
         <!-- <button id="info-btn" @click="togglePopup">?</button> -->
 
@@ -41,7 +42,6 @@ export default {
             barTitle: 'Shared',
             isInfoOpen: false,
             selectedItem: -1,
-            selectedType: '',
         };
     },
     computed: {
@@ -173,12 +173,23 @@ export default {
 
 .item-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: left;
     padding: 10px;
     cursor: pointer;
     width: 100%;
     border: 2px solid #c1c1c1;
+}
+
+ul li {
+    margin: 10px;
+    width: 93%;
+}
+
+.field {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: slategray;
 }
 
 .list {
