@@ -6,7 +6,7 @@
             <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
         </div>
 
-        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage"/>
+        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @delete-item="deletePayment" @share-item="sharePayment" @copied="displayCopyMessage"/>
         <StatusBlob :message="statusMessage" :is-error="isError" />
         <button class="plus-button" @click="toggleForm">+</button>
     </div>
@@ -33,6 +33,7 @@ export default {
             statusMessage: '',
             isError: false,
             decryptedPayments: [],
+            encryptedPayments: [],
             isFormOpen: false,
             barTitle: 'Payments',
             formTitle: 'Add Payment',
@@ -130,6 +131,7 @@ export default {
 
                 if (response.status === 200) {
                     const data = await response.json();
+                    this.encryptedPayments = data;
                     this.statusMessage = 'Decrypting payments...';
 
                     // Send encrypted data to decrypt function as a POST request
@@ -194,6 +196,65 @@ export default {
                 this.isError = true;
             }
         },
+
+        async deletePayment(id) {
+            try {
+                this.statusMessage = 'Deleting payment...';
+                this.isError = false;
+
+                const response = await fetch('https://localhost:7212/payment/' + id + '?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&strKey=' + this.userLoginfo.key, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(this.userLoginfo.email + ':' + this.userLoginfo.password), // Check this later
+                    },
+                });
+
+                if (response.status === 200) {
+                    this.statusMessage = 'Payment deleted successfully!';
+                    this.isError = false;
+                    this.fetchPayments(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
+                } else {
+                    this.statusMessage = 'Failed to delete payment. Verify Login Information.';
+                    this.isError = true;
+                }
+
+            } catch (error) {
+                console.error(`An error occurred: ${error}`);
+                this.statusMessage = 'An error occurred. Failed to delete payment.';
+                this.isError = true;
+            }
+        },
+
+        async sharePayment(index, shareeUsername) {
+            this.statusMessage = 'Sharing payment...';
+
+            try {
+                const response = await fetch('https://localhost:7212/shared?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&type=payment&shareeUsername=' + shareeUsername, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(this.encryptedPayments[index])
+                });
+
+                if (response.ok) {
+                    this.statusMessage = 'Payment shared successfully!';
+                    setTimeout(() => {
+                        this.statusMessage = '';
+                    }, 1500);                    
+                } else {
+                    this.statusMessage = 'Failed to share payment. Verify Login Information.';
+                    this.isError = true;
+                    setTimeout(() => {
+                        
+                    }, 3000);
+                }
+
+            } catch (error) {
+                console.error(`An error occurred: ${error}`);
+            }
+        }
     }
 }
 </script>

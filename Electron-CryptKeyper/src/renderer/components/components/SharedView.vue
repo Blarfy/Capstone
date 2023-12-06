@@ -3,7 +3,7 @@
         <TopBar :title="barTitle" :is-sidebar-open="isSidebarOpen" @search-changed="searchQuery"></TopBar>
 
         <ul class="list" style="list-style-type: none;" :class="{'aside': isSidebarOpen}">
-            <li v-for="(item, index) in filteredShared" :key="index">
+            <li class="shared-li" v-for="(item, index) in filteredShared" :key="index">
                 <div class="item-container" @click="togglePopup(index)">
                     <h2>{{ item }}</h2>
                     <div class="field">{{ decryptedShared[index].itemType[0].toUpperCase() + decryptedShared[index].itemType.slice(1) }}</div>
@@ -13,7 +13,7 @@
 
         <StatusBlob :message="statusMessage" :is-error="isError"></StatusBlob>
 
-        <InfoPopup :chosenItem="decryptedShared[selectedItem]" :is-open="isInfoOpen" @close-info-popup="togglePopup"></InfoPopup>
+        <InfoPopup :chosenItem="decryptedShared[selectedItem]" :is-open="isInfoOpen" @close-info-popup="togglePopup" @copied="displayCopyMessage"></InfoPopup>
 
         <!-- <button id="info-btn" @click="togglePopup">?</button> -->
 
@@ -76,6 +76,7 @@ export default {
     watch: {
         userLoginfo: {
             handler() {
+                this.decryptedShared = [];
                 this.fetchShared(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
             },
             deep: true
@@ -175,15 +176,23 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: left;
-    padding: 10px;
+    padding: 20px;
     cursor: pointer;
-    width: 100%;
-    border: 2px solid #c1c1c1;
+    width: auto;
+    border-bottom: 2px solid #c1c1c1;
+    border-top: 2px solid #c1c1c1;
+    transition: background-color 0.3s;
 }
 
-ul li {
-    margin: 10px;
-    width: 93%;
+.shared-li {
+    margin: 0px;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.shared-li :hover {
+    background-color: #c1c1c1;
+    transition: background-color 0.3s;
 }
 
 .field {
@@ -193,13 +202,15 @@ ul li {
 }
 
 .list {
-    margin-left: 50px;
+    margin-left: 10px;
+    margin-top: 0px;
     transition: margin-left 0.3s;
     display: flex;
+    flex-direction: column;
 }
 
 .list.aside {
-    margin-left: 200px;
+    margin-left: 160px;
 }
 
 </style>

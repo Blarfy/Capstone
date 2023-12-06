@@ -53,7 +53,7 @@ namespace DB_Access_Layer.Controllers
                     itemCommand.Parameters.AddWithValue("login_password", newPass.encryptedIVPass);
                     break;
                 case "payment":
-                    itemQuery = "SELECT pay_id FROM payments WHERE owner_id = @owner_id AND pay_name = @pay_name AND pay_card = @pay_card AND pay_cvv = @pay_cvv AND pay_month = @pay_month AND pay_year = @pay_year";
+                    itemQuery = "SELECT payment_id FROM payments WHERE owner_id = @owner_id AND pay_name = @pay_name AND pay_card = @pay_card AND pay_cvv = @pay_cvv AND pay_month = @pay_month AND pay_year = @pay_year";
                     var newPayment = JsonSerializer.Deserialize<EncryptedPayment>(EncryptedItem.ToString());
                     itemCommand = typeSource.CreateCommand(itemQuery);
                     itemCommand.Parameters.AddWithValue("owner_id", ownerID);
@@ -132,8 +132,8 @@ namespace DB_Access_Layer.Controllers
                 }
                 else if (reader.GetString(1) == "payment")
                 {
-                    var payCommand = dataSource.CreateCommand("SELECT pay_name, pay_card, pay_cvv, pay_month, pay_year FROM payments WHERE pay_id = @pay_id");
-                    payCommand.Parameters.AddWithValue("pay_id", reader.GetInt32(0));
+                    var payCommand = dataSource.CreateCommand("SELECT pay_name, pay_card, pay_cvv, pay_month, pay_year FROM payments WHERE payment_id = @payment_id");
+                    payCommand.Parameters.AddWithValue("payment_id", reader.GetInt32(0));
                     await using var payReader = await payCommand.ExecuteReaderAsync();
                     if (await payReader.ReadAsync())
                     {

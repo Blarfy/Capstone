@@ -7,13 +7,13 @@
         <li><a @click="$emit('changeView', 'password')">Passwords</a></li>
         <li><a @click="$emit('changeView', 'notes')">Notes</a></li>
         <li><a @click="$emit('changeView', 'payment')">Payment</a></li>
-        <li><a @click="$emit('changeView', 'files')">Files</a></li>
+        <!-- <li><a @click="$emit('changeView', 'files')">Files</a></li> -->
         <li><a @click="$emit('changeView', 'shared')">Shared</a></li>
       <li></li>
       <li></li>
       <li></li>
       <li></li>
-      <li></li>
+
       <li><a href="#:>">:></a></li>
       <li><a @click="$emit('reload')">Refresh</a></li>
       <li><a @click="logout">Logout</a></li>
@@ -87,9 +87,14 @@ nav ul li {
     padding: 10px;
 }
 
+nav ul li :hover {
+    text-decoration: underline;
+}
+
 nav ul li a {
     color: gainsboro;
     text-decoration: none;
     cursor: pointer;
 }
+
 </style>

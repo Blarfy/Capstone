@@ -6,7 +6,7 @@
       <DynamicForm :is-generator="true" :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" @copied="displayCopyMessage" />
     </div>
 
-    <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage"/>
+    <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @delete-item="deletePassword" @share-item="sharePassword" @copied="displayCopyMessage"/>
     
     <StatusBlob :message="statusMessage" :is-error="isError" />
     <button class="plus-button" @click="toggleForm">+</button>
@@ -36,7 +36,9 @@ export default {
       statusMessage: '',
       isError: false,
       decryptedPasswords: [],
+      encryptedPasswords: [],
       isFormOpen: false,
+      confirmingDelete: false,
       barTitle: 'Passwords',
       formTitle: 'Add Password',
       numberOfFields: 4,
@@ -122,6 +124,7 @@ export default {
 
         if (response.ok) {
           const data = await response.json();
+          this.encryptedPasswords = data;
           this.statusMessage = 'Decrypting Data...';
 
           // Send encrypted data to decrypt function as a POST request
@@ -153,10 +156,12 @@ export default {
         this.isError = true;
       }
     },
+    
     toggleForm() {
       this.isFormOpen = !this.isFormOpen;
       console.log("toggleForm")
     },
+    
     async handleFormSubmit(formData) {
       // Add Item
 
@@ -189,6 +194,42 @@ export default {
         this.formTitle = 'An error occurred. Failed to add password.';
       }
     },
+
+    deletePassword(index) {
+      // Deletion logic goes here
+    },
+
+    async sharePassword(index, shareeUsername) {
+      try {
+        this.statusMessage = 'Sharing password...';
+
+        const response = await fetch('https://localhost:7212/shared?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&type=password&shareeUsername=' + shareeUsername, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(this.encryptedPasswords[index])
+        });
+
+        if (response.ok) {
+          this.statusMessage = 'Password shared!';
+          setTimeout(() => {
+            this.statusMessage = '';
+          }, 1500);
+        } else {
+          console.error(`Failed to share password. Status code: ${response.status}`);
+          this.statusMessage = 'Failed to share password.';
+          this.isError = true;
+          setTimeout(() => {
+            this.statusMessage = '';
+            this.isError = false;
+          }, 1500);
+        }
+
+      } catch (error) {
+        console.error(`An error occurred: ${error}`);
+      }
+    }
   },
 };
 </script>

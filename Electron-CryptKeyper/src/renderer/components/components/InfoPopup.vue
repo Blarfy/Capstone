@@ -1,11 +1,11 @@
 <template>
 <div class="info-screen" v-if="isOpen">
     <div class="info-content" :class="{'open': isOpenDelayed}">
-        <h2>GWAGH</h2>
+        <h2>{{ type[0].toUpperCase() + type.slice(1) }}</h2>
         <section style="padding: 20px;">
           <!-- MAKE THESE COPY WHEN YOU CLICK EITHER SIDE -->
           <!-- ALSO MAKE THEM BIGGER?? ARE THEY MAYBE TOO BIG NOW??? -->
-            <div class="fullField" v-for="(field, index) in fieldTitles" :key="index">
+            <div  @click="copyValue(index)" class="fullField" v-for="(field, index) in fieldTitles" :key="index">
                 <div style="font-weight: bolder;">{{ field }}</div>
                 <div>{{ fieldValues[index] }}</div>
             </div>
@@ -28,6 +28,25 @@ export default {
   methods: {
     closeInfoPopup() {
       this.$emit('close-info-popup');
+    },
+    copyValue(index) {
+        let text = this.fieldValues[index];
+
+        try {
+            if(!navigator.clipboard) throw('Unsupported browser');
+            navigator.clipboard.writeText(text);
+        } catch(error) {
+            // Fallback for insecure browsers / Localhost testing
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
+
+        this.$emit('copied')
     },
   },
     props: [ 'isOpen', 'chosenItem'],
@@ -99,6 +118,12 @@ export default {
 .info-content.open {
   width: 40%;
   margin-top: 0px;
+}
+
+@media only screen and (max-width: 767px) {
+  .info-content.open {
+    width: 100%; /* Set the width to 100% for mobile devices */
+  }
 }
 
 .fullField {

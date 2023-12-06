@@ -6,7 +6,7 @@
             <DynamicForm :title="formTitle" :count="numberOfFields" :labels="fieldLabels" :required-fields="fieldRequired" @form-submitted="handleFormSubmit" @close-btn="toggleForm" />
         </div>
 
-        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @copied="displayCopyMessage" />
+        <DynamicItemDisplay :is-sidebar-open="isSidebarOpen" :field-names="fieldLabels" :filtered-fields="filteredFields" :hidden-fields="hiddenFields" @delete-item="deleteNote" @share-item="shareNote" @copied="displayCopyMessage" />
 
         <StatusBlob :message="statusMessage" :is-error="isError" />
         <button class="plus-button" @click="toggleForm">+</button>
@@ -34,6 +34,7 @@ export default {
             statusMessage: '',
             isError: false,
             decryptedNotes: [],
+            encryptedNotes: [],
             isFormOpen: false,
             barTitle: 'Notes',
             formTitle: 'Add Note',
@@ -108,6 +109,7 @@ export default {
 
                 if (response.status === 200) {
                     const data = await response.json();
+                    this.encryptedNotes = data;
                     this.statusMessage = 'Decrypting notes...';
 
                     // Send encrypted data to decrypt function as a POST request
@@ -165,6 +167,69 @@ export default {
                 this.isError = true;
             }
         },
+
+        async deleteNote() {
+            // Delete Item
+            try {
+                this.statusMessage = 'Deleting note...';
+                const response = await fetch('https://localhost:7212/note?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&strKey=' + this.userLoginfo.key, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(this.userLoginfo.email + ':' + this.userLoginfo.password), // Check this later
+                    },
+                    body: JSON.stringify({
+                        plaintextTitle: this.chosenItem.item.plaintextTitle,
+                        plaintextNote: this.chosenItem.item.plaintextNote,
+                    }),
+                });
+
+                if (response.status === 200) {
+                    this.statusMessage = 'Note deleted';
+                    this.fetchNotes(this.userLoginfo.email, this.userLoginfo.password, this.userLoginfo.key);
+                } else {
+                    this.statusMessage = 'Failed to delete note';
+                    this.isError = true;
+                }
+            } catch (err) {
+                this.statusMessage = 'Error deleting note';
+                this.isError = true;
+            }
+        },
+
+        async shareNote(index, shareeUsername) {
+            this.statusMessage = 'Sharing note...';
+
+            try {
+                const response = await fetch('https://localhost:7212/shared?email=' + this.userLoginfo.email + '&password=' + this.userLoginfo.password + '&type=note&shareeUsername=' + shareeUsername, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(this.userLoginfo.email + ':' + this.userLoginfo.password), // Check this later
+                    },
+                    body: JSON.stringify(this.encryptedNotes[index]),
+                });
+
+                if (response.status === 200) {
+                    this.statusMessage = 'Note shared successfully!';
+                    this.isError = false;
+                    setTimeout(() => {
+                        this.statusMessage = '';
+                    }, 1500);
+                } else {
+                    this.statusMessage = 'Failed to share note. Verify Login Information.';
+                    this.isError = true;
+                    setTimeout(() => {
+                        this.statusMessage = '';
+                        this.isError = false;
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error(`An error occurred: ${error}`);
+                this.statusMessage = 'An error occurred. Failed to share note.';
+                this.isError = true;
+            }
+        }
     }
 };
 </script>

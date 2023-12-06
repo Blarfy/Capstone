@@ -15,79 +15,113 @@
             <div class="button-column">
                 <h2>Actions </h2>
                 <section class="item-holder" v-for="(item, index) in filteredFields[0]" :key="item.id">
-                    <button class="share-button" @click="$emit('share-item', index)">📤</button>
-                    <button class="delete-button" @click="$emit('delete-item', index)">🗑️</button>
+                    <button class="share-button" @click="chooseShare(index)">📤</button>
+                    <button class="delete-button" @click="chooseDelete(index)">🗑️</button>
                 </section>
             </div>
         </div>
+        <ConfirmDelete v-if="confirmingDelete" @confirm-delete="deleteItem" @cancel-delete="toggleDelete"></ConfirmDelete>
+        <DynamicForm v-if="confirmingShare" :title="'Share To...'" :count="1" :labels="['Email']" :required-fields="[true]" @form-submitted="shareItem" @close-btn="toggleShare"></DynamicForm>
     </div>
 
 </template>
 
 <script>
+import ConfirmDelete from './ConfirmDelete.vue';
+import DynamicForm from './DynamicForm.vue';
+
     export default {
-        name: 'DynamicItemDisplay',
-        props: ['isSidebarOpen', 'fieldNames', 'filteredFields', 'hiddenFields'],
-        data() {
-            return {
-                isFieldHidden: [], // Array of arrays of booleans indicating whether or not a field is hidden
-            };
-        },
-        computed: {
-        },
-        created() {
+    name: 'DynamicItemDisplay',
+    props: ['isSidebarOpen', 'fieldNames', 'filteredFields', 'hiddenFields'],
+    data() {
+        return {
+            isFieldHidden: [], // Array of arrays of booleans indicating whether or not a field is hidden
+            confirmingDelete: false,
+            confirmingShare: false,
+            selected: -1,
+        };
+    },
+    computed: {},
+    created() {
+        this.setupItemFields();
+    },
+    watch: {
+        filteredFields() {
             this.setupItemFields();
-        },
-
-        watch: {
-            filteredFields() {
-                this.setupItemFields();
-            }
-        },
-        
-        methods: {
-            showField(count, index) {
-                this.$set(this.isFieldHidden[count], index, !this.isFieldHidden[count][index]);
-            },
-
-            setupItemFields() {
-                let tempHidden = [];
-                for(let i = 0; i < this.fieldNames.length; i++) {
-                    if (this.hiddenFields[i]) {
-                        let temp = [];
-                        for(let j = 0; j < this.filteredFields[i].length; j++) {
-                            temp.push(true);
-                        }
-                        tempHidden.push(temp);
-                    } else {
-                        tempHidden.push(Array(this.filteredFields[i].length).fill(false));
-                    }
-                }
-                this.$set(this, 'isFieldHidden', tempHidden);
-            },
-            
-            copyField(text) {
-                try {
-                    if(!navigator.clipboard) throw('Unsupported browser');
-                    navigator.clipboard.writeText(text);
-                } catch(error) {
-                    // Fallback for insecure browsers / Localhost testing
-                    const textArea = document.createElement('textarea');
-                    textArea.value = text;
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                }
-
-                this.$emit('copied')
-            },
         }
-    }
-</script>
+    },
+    methods: {
+        showField(count, index) {
+            this.$set(this.isFieldHidden[count], index, !this.isFieldHidden[count][index]);
+        },
 
-<!-- Style could use some cleanup, and items in App.vue can be moved here. -->
+        setupItemFields() {
+            let tempHidden = [];
+            for (let i = 0; i < this.fieldNames.length; i++) {
+                if (this.hiddenFields[i]) {
+                    let temp = [];
+                    for (let j = 0; j < this.filteredFields[i].length; j++) {
+                        temp.push(true);
+                    }
+                    tempHidden.push(temp);
+                }
+                else {
+                    tempHidden.push(Array(this.filteredFields[i].length).fill(false));
+                }
+            }
+            this.$set(this, 'isFieldHidden', tempHidden);
+        },
+
+        copyField(text) {
+            try {
+                if (!navigator.clipboard)
+                    throw ('Unsupported browser');
+                navigator.clipboard.writeText(text);
+            }
+            catch (error) {
+                // Fallback for insecure browsers / Localhost testing
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+            this.$emit('copied');
+        },
+
+        toggleDelete() {
+            this.confirmingDelete = !this.confirmingDelete;
+        },
+
+        chooseDelete(index) {
+            this.selected = index;
+            this.toggleDelete();
+        },
+
+        toggleShare() {
+            this.confirmingShare = !this.confirmingShare;
+        },
+
+        chooseShare(index) {
+            this.selected = index;
+            this.toggleShare();
+        },
+
+        deleteItem() {
+            this.$emit('delete-item', this.selected);
+            this.toggleDelete();
+        },
+
+        shareItem(email) {
+            this.$emit('share-item', this.selected, email);
+            this.toggleShare();
+        }
+    },
+    components: { ConfirmDelete, DynamicForm }
+}
+</script>
 
 <style>
 .flex-container {
