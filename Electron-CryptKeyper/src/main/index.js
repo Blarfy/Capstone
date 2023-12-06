@@ -23,7 +23,7 @@ function createWindow () {
     useContentSize: true,
     width: 1920,
     webPreferences: {
-      // devTools: false
+      devTools: false // disable devTools in production
     }
   })
   Menu.setApplicationMenu(null)

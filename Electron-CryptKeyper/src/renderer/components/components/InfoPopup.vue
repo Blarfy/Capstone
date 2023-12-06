@@ -115,6 +115,16 @@ export default {
   transition: width 0.3s;
 }
 
+@media only screen and (max-width: 767px) {
+  .info-content {
+    width: 100%; /* Set the width to 100% for mobile devices */
+    transition: height 0.3s;
+    height: 0%;
+    bottom: 0;
+    text-align: center;
+  }
+}
+
 .info-content.open {
   width: 40%;
   margin-top: 0px;
@@ -123,6 +133,7 @@ export default {
 @media only screen and (max-width: 767px) {
   .info-content.open {
     width: 100%; /* Set the width to 100% for mobile devices */
+    height: 100%;
   }
 }
 

@@ -21,7 +21,7 @@
             </div>
         </div>
         <ConfirmDelete v-if="confirmingDelete" @confirm-delete="deleteItem" @cancel-delete="toggleDelete"></ConfirmDelete>
-        <DynamicForm v-if="confirmingShare" :title="'Share To...'" :count="1" :labels="['Email']" :required-fields="[true]" @form-submitted="shareItem" @close-btn="toggleShare"></DynamicForm>
+        <DynamicForm v-if="confirmingShare" :title="'Share To...'" :count="1" :labels="['Username']" :required-fields="[true]" @form-submitted="shareItem" @close-btn="toggleShare"></DynamicForm>
     </div>
 
 </template>
